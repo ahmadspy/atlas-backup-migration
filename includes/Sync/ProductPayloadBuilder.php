@@ -37,6 +37,7 @@ final class ProductPayloadBuilder
                 'post_content' => $post->post_content,
                 'post_excerpt' => $post->post_excerpt,
                 'post_name' => $post->post_name,
+                'post_parent' => (int) $post->post_parent,
                 'menu_order' => (int) $post->menu_order,
             ],
             'meta' => $this->safeMeta($product_id),
@@ -75,16 +76,59 @@ final class ProductPayloadBuilder
                 continue;
             }
 
-            $terms[$taxonomy] = array_map(static function ($term): array {
-                return [
-                    'name' => $term->name,
-                    'slug' => $term->slug,
-                    'description' => $term->description,
-                ];
-            }, $post_terms);
+            $terms[$taxonomy] = $this->termPayloadsWithAncestors($post_terms, $taxonomy);
         }
 
         return $terms;
+    }
+
+    private function termPayloadsWithAncestors(array $post_terms, string $taxonomy): array
+    {
+        $items = [];
+        $assigned_ids = [];
+
+        foreach ($post_terms as $term) {
+            if (! $term || is_wp_error($term)) {
+                continue;
+            }
+
+            $assigned_ids[] = absint($term->term_id);
+            $items[absint($term->term_id)] = $this->termPayload($term, true);
+
+            foreach (get_ancestors(absint($term->term_id), $taxonomy, 'taxonomy') as $ancestor_id) {
+                $ancestor = get_term(absint($ancestor_id), $taxonomy);
+
+                if ($ancestor && ! is_wp_error($ancestor)) {
+                    $items[absint($ancestor->term_id)] = $this->termPayload($ancestor, in_array(absint($ancestor->term_id), $assigned_ids, true));
+                }
+            }
+        }
+
+        return array_values($items);
+    }
+
+    private function termPayload($term, bool $assigned): array
+    {
+        $parent = absint($term->parent);
+
+        return [
+            'term_id' => (int) $term->term_id,
+            'term_taxonomy_id' => (int) $term->term_taxonomy_id,
+            'parent' => $parent,
+            'parent_term_taxonomy_id' => $parent ? $this->termTaxonomyId($parent, $term->taxonomy) : 0,
+            'taxonomy' => $term->taxonomy,
+            'name' => $term->name,
+            'slug' => $term->slug,
+            'description' => $term->description,
+            'assigned' => $assigned,
+        ];
+    }
+
+    private function termTaxonomyId(int $term_id, string $taxonomy): int
+    {
+        $term = get_term($term_id, $taxonomy);
+
+        return is_wp_error($term) || ! $term ? 0 : absint($term->term_taxonomy_id);
     }
 
     private function attachmentIds(int $product_id): array

@@ -81,26 +81,59 @@ final class SmartImporterService
     {
         $media_map = $this->importPackagedMedia($work_dir, $this->collectMediaMetadata($data));
         $importer = new ProductImporter();
+        $product_id_map = [];
+        $term_id_map = [];
+        $term_taxonomy_id_map = [];
         $imported = 0;
+        $term_relationships_remapped = 0;
 
         foreach (($data['products'] ?? []) as $product) {
             if (! is_array($product)) {
                 continue;
             }
 
-            $result = $importer->import($product, $media_map);
+            $result = $importer->import($product, $media_map, $product_id_map, $term_id_map, $term_taxonomy_id_map, false);
 
             if (! is_wp_error($result)) {
                 $imported++;
+                $product_id_map = $this->sanitizeIdMap((array) ($result['product_id_map'] ?? $product_id_map));
+                $term_id_map = $this->sanitizeIdMap((array) ($result['term_id_map'] ?? $term_id_map));
+                $term_taxonomy_id_map = $this->sanitizeIdMap((array) ($result['term_taxonomy_id_map'] ?? $term_taxonomy_id_map));
+                $term_relationships_remapped += absint($result['term_relationships_remapped'] ?? 0);
             }
         }
+
+        $parents_remapped = $importer->remapProductParents($product_id_map);
+        $term_parents_remapped = $importer->remapTermParents($term_id_map, $term_taxonomy_id_map);
 
         return [
             'type' => 'woocommerce',
             'imported' => $imported,
             'media_remapped' => count($media_map),
-            'message' => sprintf(__('Imported %d WooCommerce products with %d remapped media items.', 'atlas-backup-migration'), $imported, count($media_map)),
+            'products_remapped' => count($product_id_map),
+            'term_ids_remapped' => count($term_id_map),
+            'term_taxonomy_ids_remapped' => count($term_taxonomy_id_map),
+            'term_relationships_remapped' => $term_relationships_remapped,
+            'variation_parents_remapped' => $parents_remapped,
+            'term_parents_remapped' => $term_parents_remapped,
+            'message' => sprintf(__('Imported %1$d WooCommerce products with %2$d remapped media items, %3$d remapped taxonomy terms, and %4$d remapped variation parents.', 'atlas-backup-migration'), $imported, count($media_map), count($term_taxonomy_id_map), $parents_remapped),
         ];
+    }
+
+    private function sanitizeIdMap(array $map): array
+    {
+        $sanitized = [];
+
+        foreach ($map as $source_id => $target_id) {
+            $source_id = absint($source_id);
+            $target_id = absint($target_id);
+
+            if ($source_id && $target_id) {
+                $sanitized[$source_id] = $target_id;
+            }
+        }
+
+        return $sanitized;
     }
 
     private function importElementor(array $data, string $work_dir): array
