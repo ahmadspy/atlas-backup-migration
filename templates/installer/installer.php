@@ -532,6 +532,35 @@ function abm_installer_execute_sql_statement(mysqli $mysqli, string $statement, 
     $mysqli->query($statement);
 }
 
+function abm_installer_state_percent(array $state, string $key): int
+{
+    $segment = is_array($state[$key] ?? null) ? $state[$key] : [];
+
+    if (! empty($segment['done'])) {
+        return 100;
+    }
+
+    $total = (int) ($segment['total'] ?? $segment['total_bytes'] ?? 0);
+    $processed = (int) ($segment['processed'] ?? $segment['processed_bytes'] ?? 0);
+
+    return $total > 0 ? min(99, max(0, (int) floor(($processed / $total) * 100))) : 0;
+}
+
+function abm_installer_resume_payload(): array
+{
+    $state = abm_installer_state();
+
+    return [
+        'db_tested' => ! empty($state['db_tested']),
+        'extract_done' => ! empty($state['extract']['done']),
+        'import_done' => ! empty($state['import']['done']),
+        'rewrite_done' => ! empty($state['rewrite']['done']),
+        'extract_percent' => abm_installer_state_percent($state, 'extract'),
+        'import_percent' => abm_installer_state_percent($state, 'import'),
+        'rewrite_percent' => abm_installer_state_percent($state, 'rewrite'),
+    ];
+}
+
 function abm_installer_regenerate_elementor_css(): string
 {
     $wpLoad = __DIR__ . DIRECTORY_SEPARATOR . 'wp-load.php';
@@ -1261,6 +1290,7 @@ $initialChecks = abm_installer_system_checks($packageName);
 $sourceUrl = (string) ($initialManifest['site_url'] ?? '');
 $sourcePrefix = (string) ($initialManifest['db_prefix'] ?? 'wp_');
 $currentUrl = abm_installer_current_url();
+$initialResume = abm_installer_resume_payload();
 ?>
 <!doctype html>
 <html lang="en">
@@ -1269,18 +1299,17 @@ $currentUrl = abm_installer_current_url();
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Atlas Standalone Installer</title>
     <style>
-        :root{--ink:#14213d;--muted:#6b7280;--paper:#fffaf0;--panel:rgba(255,255,255,.82);--line:rgba(20,33,61,.14);--gold:#fca311;--ember:#e85d04;--mint:#2a9d8f;--sky:#277da1;--bad:#d62828;--shadow:0 26px 80px rgba(20,33,61,.16);--radius:28px}
-        *{box-sizing:border-box}body{min-height:100vh;margin:0;color:var(--ink);font-family:"Aptos Display","Satoshi","Segoe UI",sans-serif;background:radial-gradient(circle at 10% 10%,rgba(252,163,17,.32),transparent 28%),radial-gradient(circle at 86% 18%,rgba(42,157,143,.28),transparent 30%),linear-gradient(135deg,#fff7e1 0%,#f7fbff 45%,#ffe9d6 100%);overflow-x:hidden}.grain{position:fixed;inset:0;pointer-events:none;opacity:.42;background-image:linear-gradient(rgba(20,33,61,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(20,33,61,.035) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,#000,transparent 92%)}.shell{width:min(1180px,calc(100% - 32px));margin:0 auto;padding:32px 0 48px}.hero{position:relative;display:grid;grid-template-columns:1.2fr .8fr;gap:22px;align-items:end;margin-bottom:22px;padding:28px;border:1px solid var(--line);border-radius:34px;background:linear-gradient(135deg,rgba(255,255,255,.88),rgba(255,255,255,.52));box-shadow:var(--shadow);backdrop-filter:blur(18px);overflow:hidden}.hero:before{content:"";position:absolute;right:-80px;top:-120px;width:340px;height:340px;border-radius:50%;background:conic-gradient(from 140deg,var(--gold),var(--mint),var(--sky),var(--gold));opacity:.28}.eyebrow{display:inline-flex;align-items:center;gap:8px;width:max-content;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#8a4b00}.hero h1{max-width:760px;margin:16px 0 10px;font-size:clamp(38px,7vw,82px);line-height:.9;letter-spacing:-.07em}.hero p{max-width:680px;margin:0;color:#48556a;font-size:16px;line-height:1.7}.hero-meta{position:relative;display:grid;gap:10px}.meta-card{padding:16px;border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.78)}.meta-card span{display:block;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.meta-card strong{display:block;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.workspace{display:grid;grid-template-columns:310px minmax(0,1fr);gap:22px}.stepper{position:sticky;top:18px;align-self:start;padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:rgba(255,255,255,.74);box-shadow:var(--shadow);backdrop-filter:blur(18px)}.step{display:grid;grid-template-columns:42px 1fr;gap:12px;width:100%;padding:12px;border:0;border-radius:20px;background:transparent;color:var(--ink);text-align:left;cursor:pointer}.step+.step{margin-top:6px}.step:hover,.step.is-active{background:#fff4da}.step.is-done .num{background:var(--mint);color:#fff}.num{display:grid;place-items:center;width:42px;height:42px;border-radius:15px;background:#f1e4ca;color:#8a4b00;font-weight:1000}.step-title{display:block;margin-top:2px;font-weight:1000}.step-desc{display:block;margin-top:3px;color:var(--muted);font-size:12px;line-height:1.35}.panel{display:none;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow);backdrop-filter:blur(18px);overflow:hidden}.panel.is-active{display:block;animation:rise .35s ease both}@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.panel-head{padding:28px 30px 18px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,rgba(255,255,255,.85),rgba(255,250,240,.58))}.panel-head h2{margin:0;font-size:30px;letter-spacing:-.04em}.panel-head p{margin:8px 0 0;color:#526071;line-height:1.65}.panel-body{padding:26px 30px 30px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.card{padding:18px;border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.72)}.check-list{display:grid;gap:10px}.check{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;padding:14px;border:1px solid var(--line);border-radius:18px;background:#fff}.dot{display:grid;place-items:center;width:38px;height:38px;border-radius:13px;background:#eef2f7;color:#64748b;font-weight:1000}.check.pass .dot{background:#dff7ef;color:#087f5b}.check.warn .dot{background:#fff2c6;color:#a16207}.check.fail .dot{background:#ffe0e0;color:var(--bad)}.check strong{display:block}.check small{display:block;margin-top:3px;color:var(--muted);line-height:1.35}.badge{display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:999px;background:#edf2f7;color:#526071;font-size:12px;font-weight:1000}.pass .badge{background:#dff7ef;color:#087f5b}.warn .badge{background:#fff2c6;color:#a16207}.fail .badge{background:#ffe0e0;color:var(--bad)}label{display:grid;gap:8px;font-weight:950;color:#26364f}.hint{color:var(--muted);font-size:12px;line-height:1.45}input{width:100%;min-height:48px;border:1px solid rgba(20,33,61,.18);border-radius:16px;background:#fff;padding:0 14px;color:var(--ink);font:inherit;font-weight:700;outline:none;transition:.18s}input:focus{border-color:var(--gold);box-shadow:0 0 0 4px rgba(252,163,17,.16)}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 18px;border:0;border-radius:16px;background:#18233a;color:#fff;font-weight:1000;cursor:pointer;box-shadow:0 14px 28px rgba(20,33,61,.18);transition:.18s}.btn:hover{transform:translateY(-1px)}.btn:disabled{cursor:not-allowed;opacity:.48;transform:none}.btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}.btn.gold{background:linear-gradient(135deg,var(--gold),var(--ember))}.btn.green{background:linear-gradient(135deg,var(--mint),#1f7a8c)}.btn.danger{background:linear-gradient(135deg,#ef233c,#9d0208)}.progress-wrap{display:grid;gap:10px;margin:14px 0}.progress-top{display:flex;align-items:center;justify-content:space-between;color:#526071;font-size:13px;font-weight:900}.bar{height:14px;border-radius:999px;background:#edf2f7;overflow:hidden}.bar span{display:block;width:0%;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--mint),var(--gold),var(--ember));transition:width .25s ease}.log{min-height:46px;margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:18px;background:#111827;color:#dbeafe;font:13px/1.5 "Cascadia Code","JetBrains Mono",monospace;white-space:pre-wrap}.notice{display:none;margin-top:16px;padding:14px 16px;border-radius:18px;font-weight:800;line-height:1.5}.notice.show{display:block}.notice.ok{background:#dff7ef;color:#087f5b}.notice.err{background:#ffe0e0;color:#9d0208}.notice.info{background:#e7f2ff;color:#1d4e89}.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.toggle{display:flex;align-items:center;gap:10px;padding:14px;border:1px solid var(--line);border-radius:18px;background:#fff;font-weight:900}.toggle input{width:18px;min-height:18px}.mini{font-size:12px;color:var(--muted);line-height:1.5}.cleanup-box{border:1px dashed rgba(214,40,40,.45);background:rgba(255,224,224,.5)}@media(max-width:960px){.hero,.workspace,.split{grid-template-columns:1fr}.stepper{position:relative;top:auto}.grid,.grid-3{grid-template-columns:1fr}.hero h1{font-size:46px}}@media(max-width:560px){.shell{width:min(100% - 18px,1180px);padding-top:14px}.hero,.panel-head,.panel-body{padding:20px}.stepper{padding:12px}.actions .btn{width:100%}}
+        :root{--bg:#07111f;--card:rgba(255,255,255,.9);--card2:rgba(255,255,255,.72);--ink:#0f172a;--muted:#64748b;--line:rgba(148,163,184,.28);--brand:#7c3aed;--brand2:#06b6d4;--ok:#10b981;--warn:#f59e0b;--bad:#ef4444;--shadow:0 28px 90px rgba(2,6,23,.28);--radius:28px}*{box-sizing:border-box}html{scroll-behavior:smooth}body{min-height:100vh;margin:0;color:var(--ink);font-family:Inter,"SF Pro Display","Segoe UI",Roboto,Arial,sans-serif;background:radial-gradient(circle at 8% 8%,rgba(124,58,237,.48),transparent 30%),radial-gradient(circle at 86% 14%,rgba(6,182,212,.38),transparent 32%),radial-gradient(circle at 50% 100%,rgba(16,185,129,.18),transparent 34%),linear-gradient(135deg,#050816 0%,#0f172a 58%,#111827 100%);overflow-x:hidden}.aurora{position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(to bottom,#000,transparent 88%)}.shell{width:min(1220px,calc(100% - 32px));margin:0 auto;padding:32px 0 52px}.hero{position:relative;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:24px;align-items:stretch;margin-bottom:22px;padding:28px;border:1px solid rgba(255,255,255,.18);border-radius:36px;background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.07));box-shadow:var(--shadow);backdrop-filter:blur(22px);overflow:hidden}.hero:before{content:"";position:absolute;inset:auto -90px -130px auto;width:360px;height:360px;border-radius:999px;background:conic-gradient(from 90deg,var(--brand),var(--brand2),var(--ok),var(--brand));filter:blur(4px);opacity:.34}.hero-copy,.hero-meta{position:relative}.eyebrow{display:inline-flex;align-items:center;gap:9px;width:max-content;padding:9px 13px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(255,255,255,.12);color:#dbeafe;font-size:12px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.pulse{width:9px;height:9px;border-radius:999px;background:var(--ok);box-shadow:0 0 0 8px rgba(16,185,129,.16)}.hero h1{max-width:780px;margin:18px 0 12px;color:#fff;font-size:clamp(38px,6vw,78px);line-height:.92;letter-spacing:-.07em}.hero p{max-width:720px;margin:0;color:#cbd5e1;font-size:16px;line-height:1.75}.hero-meta{display:grid;gap:12px}.meta-card{padding:17px;border:1px solid rgba(255,255,255,.16);border-radius:23px;background:rgba(255,255,255,.12);color:#fff}.meta-card span{display:block;color:#bae6fd;font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.1em}.meta-card strong{display:block;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.workspace{display:grid;grid-template-columns:330px minmax(0,1fr);gap:22px}.stepper{position:sticky;top:18px;align-self:start;padding:16px;border:1px solid rgba(255,255,255,.17);border-radius:var(--radius);background:rgba(15,23,42,.72);box-shadow:var(--shadow);backdrop-filter:blur(22px)}.step{position:relative;display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;width:100%;padding:13px;border:0;border-radius:20px;background:transparent;color:#dbeafe;text-align:left;cursor:pointer;transition:.18s}.step+.step{margin-top:6px}.step:hover,.step.is-active{background:rgba(255,255,255,.1)}.step.is-active{box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}.step.is-done .num{background:linear-gradient(135deg,var(--ok),#22c55e);color:#fff}.step.is-done .tick{opacity:1}.num{display:grid;place-items:center;width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,.12);color:#bae6fd;font-weight:1000}.step-title{display:block;font-weight:1000}.step-desc{display:block;margin-top:4px;color:#94a3b8;font-size:12px;line-height:1.35}.tick{opacity:.25;color:#86efac;font-weight:1000}.panel{display:none;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);backdrop-filter:blur(18px);overflow:hidden}.panel.is-active{display:block;animation:rise .28s ease both}@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.panel-head{padding:28px 30px 20px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,#fff,rgba(248,250,252,.72))}.panel-kicker{margin:0 0 8px;color:var(--brand);font-size:12px;font-weight:1000;letter-spacing:.12em;text-transform:uppercase}.panel-head h2{margin:0;font-size:31px;letter-spacing:-.04em}.panel-head p{margin:9px 0 0;color:#475569;line-height:1.65}.panel-body{padding:26px 30px 30px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{padding:19px;border:1px solid var(--line);border-radius:23px;background:var(--card2)}.card h3{margin:0 0 8px;font-size:19px}.check-list{display:grid;gap:10px}.check{display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center;padding:14px;border:1px solid var(--line);border-radius:19px;background:#fff}.dot{display:grid;place-items:center;width:42px;height:42px;border-radius:15px;background:#eef2ff;color:#4f46e5;font-size:12px;font-weight:1000}.check.pass .dot{background:#dcfce7;color:#047857}.check.warn .dot{background:#fef3c7;color:#b45309}.check.fail .dot{background:#fee2e2;color:#b91c1c}.check strong{display:block}.check small{display:block;margin-top:3px;color:var(--muted);line-height:1.35}.badge{display:inline-flex;align-items:center;height:29px;padding:0 10px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:12px;font-weight:1000;text-transform:uppercase}.pass .badge{background:#dcfce7;color:#047857}.warn .badge{background:#fef3c7;color:#b45309}.fail .badge{background:#fee2e2;color:#b91c1c}label{display:grid;gap:8px;font-weight:950;color:#1e293b}.hint{color:var(--muted);font-size:12px;line-height:1.45}input{width:100%;min-height:50px;border:1px solid rgba(148,163,184,.42);border-radius:16px;background:#fff;padding:0 14px;color:var(--ink);font:inherit;font-weight:750;outline:none;transition:.18s}input:focus{border-color:var(--brand);box-shadow:0 0 0 4px rgba(124,58,237,.15)}input:disabled{background:#f1f5f9;color:#64748b}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 18px;border:0;border-radius:16px;background:#0f172a;color:#fff;font-weight:1000;cursor:pointer;box-shadow:0 14px 28px rgba(15,23,42,.18);transition:.18s}.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 18px 34px rgba(15,23,42,.22)}.btn:disabled{opacity:.48;cursor:not-allowed;box-shadow:none}.btn.gold{background:linear-gradient(135deg,#f59e0b,#f97316)}.btn.green{background:linear-gradient(135deg,#10b981,#059669)}.btn.danger{background:linear-gradient(135deg,#ef4444,#b91c1c)}.progress-wrap{display:grid;gap:10px;margin:16px 0}.progress-top{display:flex;align-items:center;justify-content:space-between;color:#475569;font-size:13px;font-weight:950}.bar{height:15px;border-radius:999px;background:#e2e8f0;overflow:hidden}.bar span{display:block;width:0%;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--brand),var(--brand2),var(--ok));transition:width .22s ease}.log{grid-column:1/-1;min-height:70px;padding:15px 16px;border:1px solid rgba(15,23,42,.12);border-radius:19px;background:#020617;color:#dbeafe;font:13px/1.55 "Cascadia Code","JetBrains Mono",monospace;white-space:pre-wrap}.notice{display:none;margin-top:16px;padding:14px 16px;border-radius:18px;font-weight:850;line-height:1.5}.notice.show{display:block}.notice.ok{background:#dcfce7;color:#047857}.notice.err{background:#fee2e2;color:#991b1b}.notice.info{background:#dbeafe;color:#1d4ed8}.toggle{display:flex;align-items:center;gap:11px;margin-top:16px;padding:14px;border:1px solid var(--line);border-radius:18px;background:#fff;font-weight:950}.toggle input{width:18px;min-height:18px}.mini{font-size:12px;color:var(--muted);line-height:1.55}.cleanup-box{border:1px dashed rgba(239,68,68,.45);background:rgba(254,226,226,.55)}@media(max-width:980px){.hero,.workspace,.split{grid-template-columns:1fr}.stepper{position:relative;top:auto}.grid{grid-template-columns:1fr}.hero h1{font-size:46px}}@media(max-width:560px){.shell{width:min(100% - 18px,1220px);padding-top:14px}.hero,.panel-head,.panel-body{padding:20px}.stepper{padding:12px}.step{grid-template-columns:40px 1fr}.tick{display:none}.actions .btn{width:100%}}
     </style>
 </head>
 <body>
-<div class="grain"></div>
+<div class="aurora"></div>
 <main class="shell">
     <section class="hero">
-        <div>
-            <span class="eyebrow">Atlas standalone restore</span>
-            <h1>Launch the site from a clean restore path.</h1>
-            <p>This installer is self-contained. It checks the server, tests the target database, extracts the package, imports SQL with progress, rewrites URLs safely, manages admins and removes itself when finished.</p>
+        <div class="hero-copy">
+            <span class="eyebrow"><span class="pulse"></span>Atlas standalone restore</span>
+            <h1>Restore your WordPress site with confidence.</h1>
+            <p>A self-contained, step-by-step installer for full backup recovery: server checks, AJAX database validation, real extraction/import progress, serialized-safe URL rewriting, admin management and secure cleanup.</p>
         </div>
         <div class="hero-meta">
             <div class="meta-card"><span>Package</span><strong><?php echo abm_installer_h(basename($packageName)); ?></strong></div>
@@ -1291,17 +1320,17 @@ $currentUrl = abm_installer_current_url();
 
     <section class="workspace">
         <aside class="stepper" aria-label="Installer steps">
-            <button class="step is-active" data-step="0"><span class="num">1</span><span><span class="step-title">System Check</span><span class="step-desc">PHP, extensions, memory and permissions</span></span></button>
-            <button class="step" data-step="1"><span class="num">2</span><span><span class="step-title">Database Setup</span><span class="step-desc">Connect and verify write access</span></span></button>
-            <button class="step" data-step="2"><span class="num">3</span><span><span class="step-title">Extract & Import</span><span class="step-desc">Restore files and SQL with progress</span></span></button>
-            <button class="step" data-step="3"><span class="num">4</span><span><span class="step-title">Search & Replace</span><span class="step-desc">Serialized-safe URL migration</span></span></button>
-            <button class="step" data-step="4"><span class="num">5</span><span><span class="step-title">Admin & Config</span><span class="step-desc">Site title, admin user and passwords</span></span></button>
-            <button class="step" data-step="5"><span class="num">6</span><span><span class="step-title">Cleanup</span><span class="step-desc">Delete backup files and installer</span></span></button>
+            <button class="step is-active" data-step="0"><span class="num">1</span><span><span class="step-title">System Check</span><span class="step-desc">PHP, memory, extensions, permissions</span></span><span class="tick">✓</span></button>
+            <button class="step" data-step="1"><span class="num">2</span><span><span class="step-title">Database Setup</span><span class="step-desc">AJAX connection and write test</span></span><span class="tick">✓</span></button>
+            <button class="step" data-step="2"><span class="num">3</span><span><span class="step-title">Extract & Import</span><span class="step-desc">Files and SQL progress bars</span></span><span class="tick">✓</span></button>
+            <button class="step" data-step="3"><span class="num">4</span><span><span class="step-title">Search & Replace</span><span class="step-desc">Serialized-safe URL rewrite</span></span><span class="tick">✓</span></button>
+            <button class="step" data-step="4"><span class="num">5</span><span><span class="step-title">Admin & Config</span><span class="step-desc">Title, admin and password tools</span></span><span class="tick">✓</span></button>
+            <button class="step" data-step="5"><span class="num">6</span><span><span class="step-title">Cleanup</span><span class="step-desc">Remove installer artifacts</span></span><span class="tick">✓</span></button>
         </aside>
 
         <div>
             <section class="panel is-active" data-panel="0">
-                <div class="panel-head"><h2>System Check</h2><p>Resolve failed checks before continuing. Warnings are safe to review, but may affect large restores.</p></div>
+                <div class="panel-head"><p class="panel-kicker">Step 01</p><h2>System Check</h2><p>Checks PHP version, memory limit, required extensions, package availability, disk space and write permissions before restore.</p></div>
                 <div class="panel-body">
                     <div id="checks" class="check-list"></div>
                     <div id="systemNotice" class="notice"></div>
@@ -1310,14 +1339,14 @@ $currentUrl = abm_installer_current_url();
             </section>
 
             <section class="panel" data-panel="1">
-                <div class="panel-head"><h2>Database Setup</h2><p>Enter the target database details. The installer runs an AJAX connection test and verifies write privileges before continuing.</p></div>
+                <div class="panel-head"><p class="panel-kicker">Step 02</p><h2>Database Setup</h2><p>Enter the target database credentials. The installer validates the connection and temporary table write access over AJAX.</p></div>
                 <div class="panel-body">
                     <div class="grid">
                         <label>Host<input id="dbHost" value="localhost" autocomplete="off"></label>
                         <label>Database Name<input id="dbName" autocomplete="off"></label>
                         <label>Database User<input id="dbUser" autocomplete="off"></label>
                         <label>Database Password<input id="dbPass" type="password" autocomplete="new-password"></label>
-                        <label>Target Table Prefix<input id="dbPrefix" value="<?php echo abm_installer_h($sourcePrefix ?: 'wp_'); ?>"><span class="hint">If changed, imported SQL table names and wp-config.php are remapped to this prefix.</span></label>
+                        <label>Target Table Prefix<input id="dbPrefix" value="<?php echo abm_installer_h($sourcePrefix ?: 'wp_'); ?>"><span class="hint">Changing this remaps SQL table names and updates wp-config.php.</span></label>
                         <label>Detected Source Prefix<input value="<?php echo abm_installer_h($sourcePrefix ?: 'wp_'); ?>" disabled></label>
                     </div>
                     <div id="dbNotice" class="notice"></div>
@@ -1326,20 +1355,10 @@ $currentUrl = abm_installer_current_url();
             </section>
 
             <section class="panel" data-panel="2">
-                <div class="panel-head"><h2>Extraction & DB Import</h2><p>Files are extracted from <strong>site/</strong> and SQL is imported statement-by-statement so the progress bars reflect real work.</p></div>
+                <div class="panel-head"><p class="panel-kicker">Step 03</p><h2>Extraction & DB Import</h2><p>Extracts package entries from <strong>site/</strong>, imports SQL statement-by-statement and reports actual processed entries/bytes.</p></div>
                 <div class="panel-body split">
-                    <div class="card">
-                        <h3>Extract Files</h3>
-                        <p class="mini">Existing files can be overwritten. Keep this browser tab open.</p>
-                        <div class="progress-wrap"><div class="progress-top"><span id="extractText">Waiting</span><span id="extractPct">0%</span></div><div class="bar"><span id="extractBar"></span></div></div>
-                        <button class="btn gold" id="extractBtn">Start Extraction</button>
-                    </div>
-                    <div class="card">
-                        <h3>Import Database</h3>
-                        <p class="mini">The installer also updates wp-config.php with the tested database credentials.</p>
-                        <div class="progress-wrap"><div class="progress-top"><span id="importText">Waiting</span><span id="importPct">0%</span></div><div class="bar"><span id="importBar"></span></div></div>
-                        <button class="btn green" id="importBtn" disabled>Start DB Import</button>
-                    </div>
+                    <div class="card"><h3>Extract Files</h3><p class="mini">Existing files may be overwritten. Keep this tab open until completion.</p><div class="progress-wrap"><div class="progress-top"><span id="extractText">Waiting</span><span id="extractPct">0%</span></div><div class="bar"><span id="extractBar"></span></div></div><button class="btn gold" id="extractBtn">Start Extraction</button></div>
+                    <div class="card"><h3>Import Database</h3><p class="mini">Updates wp-config.php and remaps table prefixes when needed.</p><div class="progress-wrap"><div class="progress-top"><span id="importText">Waiting</span><span id="importPct">0%</span></div><div class="bar"><span id="importBar"></span></div></div><button class="btn green" id="importBtn" disabled>Start DB Import</button></div>
                     <div class="log" id="restoreLog">Ready.</div>
                     <div id="restoreNotice" class="notice"></div>
                     <div class="actions"><button class="btn" id="toRewrite" disabled>Continue to Search & Replace</button></div>
@@ -1347,10 +1366,10 @@ $currentUrl = abm_installer_current_url();
             </section>
 
             <section class="panel" data-panel="3">
-                <div class="panel-head"><h2>Search & Replace</h2><p>Update old URLs to the target URL across posts, postmeta, options and other manifest-defined columns while preserving serialized data lengths.</p></div>
+                <div class="panel-head"><p class="panel-kicker">Step 04</p><h2>Search & Replace</h2><p>Rewrites old URLs to the new URL in manifest-defined WordPress tables while preserving serialized data.</p></div>
                 <div class="panel-body">
                     <div class="grid">
-                        <label>Old Site URL<input id="oldUrl" value="<?php echo abm_installer_h($sourceUrl); ?>" placeholder="https://old-domain.com"><span class="hint">Manifest URLs are also included automatically.</span></label>
+                        <label>Old Site URL<input id="oldUrl" value="<?php echo abm_installer_h($sourceUrl); ?>" placeholder="https://old-domain.com"><span class="hint">Manifest URLs and http/https variants are included automatically.</span></label>
                         <label>New Site URL<input id="newUrl" value="<?php echo abm_installer_h($currentUrl); ?>" placeholder="https://new-domain.com"></label>
                     </div>
                     <div class="progress-wrap"><div class="progress-top"><span id="rewriteText">Waiting</span><span id="rewritePct">0%</span></div><div class="bar"><span id="rewriteBar"></span></div></div>
@@ -1360,7 +1379,7 @@ $currentUrl = abm_installer_current_url();
             </section>
 
             <section class="panel" data-panel="4">
-                <div class="panel-head"><h2>Admin & Config Management</h2><p>Finalize the restored WordPress site by updating the title, creating a safe admin account, resetting an existing admin password, or regenerating Elementor CSS.</p></div>
+                <div class="panel-head"><p class="panel-kicker">Step 05</p><h2>Admin & Config Management</h2><p>Finalize the restored site by changing the site title, creating an administrator, resetting an admin password or regenerating Elementor CSS.</p></div>
                 <div class="panel-body">
                     <div class="grid">
                         <label>New Site Title<input id="siteTitle" placeholder="Optional"></label>
@@ -1377,9 +1396,9 @@ $currentUrl = abm_installer_current_url();
             </section>
 
             <section class="panel" data-panel="5">
-                <div class="panel-head"><h2>Cleanup</h2><p>Remove the archive, temporary SQL/manifest files, installer state and this installer. Do this only after confirming the restored site works.</p></div>
+                <div class="panel-head"><p class="panel-kicker">Step 06</p><h2>Cleanup</h2><p>Deletes the backup archive, extracted SQL/manifest files, installer state and this installer file after you confirm the site works.</p></div>
                 <div class="panel-body">
-                    <div class="card cleanup-box"><strong>Security reminder</strong><p class="mini">Leaving installer.php or the backup package on a public server is dangerous. Cleanup deletes only installer artifacts, not the restored WordPress files.</p></div>
+                    <div class="card cleanup-box"><strong>Security reminder</strong><p class="mini">Leaving installer.php or backup archives on a public server is dangerous. Cleanup does not delete restored WordPress files.</p></div>
                     <div id="cleanupNotice" class="notice"></div>
                     <div class="actions"><button class="btn danger" id="cleanupBtn">Delete Backup Files & Installer</button></div>
                 </div>
@@ -1392,14 +1411,14 @@ $currentUrl = abm_installer_current_url();
     const cfg = {
         token: <?php echo json_encode($installerToken); ?>,
         initialChecks: <?php echo json_encode($initialChecks['checks'], JSON_UNESCAPED_SLASHES); ?>,
-        canContinue: <?php echo $initialChecks['can_continue'] ? 'true' : 'false'; ?>
+        canContinue: <?php echo $initialChecks['can_continue'] ? 'true' : 'false'; ?>,
+        resume: <?php echo json_encode($initialResume, JSON_UNESCAPED_SLASHES); ?>
     };
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => Array.from(document.querySelectorAll(selector));
-    const completed = new Set();
-    let dbReady = false;
-    let extracted = false;
-    let imported = false;
+    let dbReady = !!cfg.resume.db_tested;
+    let extracted = !!cfg.resume.extract_done;
+    let imported = !!cfg.resume.import_done;
 
     function esc(value){return String(value || '').replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
     function notice(el, type, message){el.className = 'notice show ' + type; el.textContent = message;}
@@ -1409,26 +1428,22 @@ $currentUrl = abm_installer_current_url();
     function formBody(action, data){const body = new URLSearchParams(); body.set('abm_ajax','1'); body.set('token',cfg.token); body.set('action',action); Object.keys(data || {}).forEach((key) => body.set(key, data[key])); return body;}
     async function api(action, data){const res = await fetch(location.href, {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:formBody(action,data || {})}); const json = await res.json().catch(() => ({success:false,message:'Invalid JSON response from installer.'})); if (!json.success){throw new Error(json.message || 'Installer request failed.');} return json;}
     function go(step){$$('.panel').forEach((panel) => panel.classList.toggle('is-active', Number(panel.dataset.panel) === step)); $$('.step').forEach((item) => item.classList.toggle('is-active', Number(item.dataset.step) === step)); window.scrollTo({top:0,behavior:'smooth'});}
-    function done(step){completed.add(step); const item = $('.step[data-step="' + step + '"]'); if (item){item.classList.add('is-done');}}
+    function done(step){const item = $('.step[data-step="' + step + '"]'); if (item){item.classList.add('is-done');}}
     function renderChecks(checks){$('#checks').innerHTML = checks.map((check) => '<div class="check '+esc(check.status)+'"><span class="dot">'+(check.status === 'pass' ? 'OK' : check.status === 'warn' ? '!' : 'X')+'</span><span><strong>'+esc(check.label)+'</strong><small>'+esc(check.detail)+'</small></span><span class="badge">'+esc(check.status)+'</span></div>').join('');}
+    function markResume(){if (cfg.resume.db_tested){done(1); $('#toExtract').disabled = false;} if (cfg.resume.extract_done){setProgress('extract',100,'Completed'); $('#importBtn').disabled = false;} else if (cfg.resume.extract_percent){setProgress('extract',cfg.resume.extract_percent,'Resume available');} if (cfg.resume.import_done){setProgress('import',100,'Completed'); $('#toRewrite').disabled = false; done(2);} else if (cfg.resume.import_percent){setProgress('import',cfg.resume.import_percent,'Resume available');} if (cfg.resume.rewrite_done){setProgress('rewrite',100,'Completed'); $('#toAdmin').disabled = false; done(3);} else if (cfg.resume.rewrite_percent){setProgress('rewrite',cfg.resume.rewrite_percent,'Resume available');}}
 
     async function runChecks(){const button = $('#runChecks'); setBusy(button,true,'Checking...'); try{const data = await api('system_check'); renderChecks(data.checks || []); cfg.canContinue = !!data.can_continue; $('#toDb').disabled = !cfg.canContinue; if (data.manifest && data.manifest.site_url){$('#sourceUrlMeta').textContent = data.manifest.site_url; $('#oldUrl').value = $('#oldUrl').value || data.manifest.site_url;} if (data.manifest && data.manifest.db_prefix){$('#dbPrefix').value = data.manifest.db_prefix;} notice($('#systemNotice'), cfg.canContinue ? 'ok' : 'err', cfg.canContinue ? 'All required checks passed.' : 'Resolve failed checks before continuing.'); if (cfg.canContinue){done(0);} }catch(error){notice($('#systemNotice'),'err',error.message);} finally{setBusy(button,false);}}
-
     async function testDb(){const button = $('#testDb'); setBusy(button,true,'Testing...'); try{const data = await api('test_db', dbPayload()); dbReady = true; $('#toExtract').disabled = false; done(1); notice($('#dbNotice'),'ok', data.message + ' MySQL: ' + (data.server || 'unknown'));}catch(error){dbReady = false; $('#toExtract').disabled = true; notice($('#dbNotice'),'err',error.message);} finally{setBusy(button,false);}}
-
-    async function extract(){const button = $('#extractBtn'); setBusy(button,true,'Extracting...'); try{const prep = await api('extract_prepare'); setProgress('extract',0,'0 of ' + (prep.total || 0) + ' entries'); $('#restoreLog').textContent = 'Extraction prepared.\n'; let data = prep; do{data = await api('extract_chunk'); setProgress('extract',data.percent,(data.processed || 0) + ' of ' + (data.total || 0) + ' entries'); $('#restoreLog').textContent = data.message + '\nProcessed entries: ' + (data.processed || 0) + '/' + (data.total || 0); }while(!data.done); extracted = true; $('#importBtn').disabled = !dbReady; done(2); notice($('#restoreNotice'),'ok','Files extracted. You can now import the database.');}catch(error){notice($('#restoreNotice'),'err',error.message);} finally{setBusy(button,false);}}
-
-    async function importDb(){const button = $('#importBtn'); if (!dbReady){notice($('#restoreNotice'),'err','Test the database connection first.'); return;} setBusy(button,true,'Importing...'); try{const prep = await api('import_prepare', dbPayload()); setProgress('import',0,'0 bytes'); $('#restoreLog').textContent = prep.message + '\n'; let data = prep; do{data = await api('import_chunk', dbPayload()); setProgress('import',data.percent,(data.processed_bytes || 0) + ' of ' + (data.total_bytes || 0) + ' bytes'); $('#restoreLog').textContent = data.message + '\nStatements executed: ' + (data.statements || 0); }while(!data.done); imported = true; $('#toRewrite').disabled = false; done(2); notice($('#restoreNotice'),'ok','Database import completed.');}catch(error){notice($('#restoreNotice'),'err',error.message);} finally{setBusy(button,false);}}
-
+    async function extract(){const button = $('#extractBtn'); setBusy(button,true,'Extracting...'); try{const prep = await api('extract_prepare'); setProgress('extract',0,'0 of ' + (prep.total || 0) + ' entries'); $('#restoreLog').textContent = 'Extraction prepared.\n'; let data = prep; do{data = await api('extract_chunk'); setProgress('extract',data.percent,(data.processed || 0) + ' of ' + (data.total || 0) + ' entries'); $('#restoreLog').textContent = data.message + '\nProcessed entries: ' + (data.processed || 0) + '/' + (data.total || 0); }while(!data.done); extracted = true; $('#importBtn').disabled = !dbReady; notice($('#restoreNotice'),'ok','Files extracted. You can now import the database.');}catch(error){notice($('#restoreNotice'),'err',error.message);} finally{setBusy(button,false);}}
+    async function importDb(){const button = $('#importBtn'); if (!dbReady){notice($('#restoreNotice'),'err','Test the database connection first.'); return;} if (!extracted && !confirm('File extraction is not marked complete in this browser. Continue with DB import?')){return;} setBusy(button,true,'Importing...'); try{const prep = await api('import_prepare', dbPayload()); setProgress('import',0,'0 bytes'); $('#restoreLog').textContent = prep.message + '\n'; let data = prep; do{data = await api('import_chunk', dbPayload()); setProgress('import',data.percent,(data.processed_bytes || 0) + ' of ' + (data.total_bytes || 0) + ' bytes'); $('#restoreLog').textContent = data.message + '\nStatements executed: ' + (data.statements || 0); }while(!data.done); imported = true; $('#toRewrite').disabled = false; done(2); notice($('#restoreNotice'),'ok','Database import completed.');}catch(error){notice($('#restoreNotice'),'err',error.message);} finally{setBusy(button,false);}}
     async function rewrite(){const button = $('#rewriteBtn'); if (!imported && !confirm('Database import is not marked complete in this browser. Continue anyway?')){return;} setBusy(button,true,'Rewriting...'); try{let payload = Object.assign({}, dbPayload(), {old_url:$('#oldUrl').value,new_url:$('#newUrl').value}); const prep = await api('rewrite_prepare', payload); setProgress('rewrite',0,'0 of ' + (prep.total || 0) + ' rows'); let data = prep; do{data = await api('rewrite_chunk', dbPayload()); setProgress('rewrite',data.percent,(data.processed || 0) + ' of ' + (data.total || 0) + ' rows'); }while(!data.done); $('#toAdmin').disabled = false; done(3); notice($('#rewriteNotice'),'ok','Search and replace completed. Rows updated: ' + (data.updated || 0));}catch(error){notice($('#rewriteNotice'),'err',error.message);} finally{setBusy(button,false);}}
-
     async function adminConfig(){const button = $('#adminBtn'); setBusy(button,true,'Applying...'); try{const data = await api('admin_config', {site_title:$('#siteTitle').value,new_admin_user:$('#newAdminUser').value,new_admin_email:$('#newAdminEmail').value,new_admin_pass:$('#newAdminPass').value,reset_admin_login:$('#resetAdminLogin').value,reset_admin_pass:$('#resetAdminPass').value,regenerate_elementor:$('#regenElementor').checked ? '1' : ''}); done(4); notice($('#adminNotice'),'ok',(data.messages || []).join(' '));}catch(error){notice($('#adminNotice'),'err',error.message);} finally{setBusy(button,false);}}
-
     async function cleanup(){if (!confirm('Delete the backup package, temporary files and installer.php? This cannot be undone.')){return;} const button = $('#cleanupBtn'); setBusy(button,true,'Cleaning...'); try{const data = await api('cleanup'); done(5); notice($('#cleanupNotice'),'ok',data.message + ' Removed: ' + ((data.removed || []).join(', ') || 'none') + (data.failed && data.failed.length ? '. Failed: ' + data.failed.join(', ') : ''));}catch(error){notice($('#cleanupNotice'),'err',error.message);} finally{setBusy(button,false);}}
 
     renderChecks(cfg.initialChecks || []);
     $('#toDb').disabled = !cfg.canContinue;
     if (cfg.canContinue){notice($('#systemNotice'),'ok','Initial required checks passed.'); done(0);} else {notice($('#systemNotice'),'err','One or more required checks failed.');}
+    markResume();
     $$('.step').forEach((item) => item.addEventListener('click', () => go(Number(item.dataset.step))));
     $('#runChecks').addEventListener('click', runChecks);
     $('#toDb').addEventListener('click', () => go(1));

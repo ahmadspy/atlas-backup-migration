@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Atlas Backup Migration
- * Plugin URI:  https://example.com/atlas-backup-migration
+ * Plugin URI:  https://catus.ir/atlas-backup-migration
  * Description: Advanced WordPress backup and migration plugin boilerplate with a modern settings panel.
  * Version:     0.1.0
- * Author:      Your Name
- * Author URI:  https://example.com
+ * Author:      ahmadspy
+ * Author URI:  https://catus.ir
  * Text Domain: atlas-backup-migration
  * Domain Path: /languages
  * Requires at least: 6.0

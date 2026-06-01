@@ -1,0 +1,556 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Atlas Backup Migration 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-01 05:15+0000\n"
+"PO-Revision-Date: 2026-06-01 05:15+0000\n"
+"Last-Translator: Atlas Backup Migration Team <support@example.com>\n"
+"Language-Team: Persian <fa_IR@example.com>\n"
+"Language: fa_IR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: GapCode\n"
+
+#: templates/admin/settings-page.php:148
+msgid " (active)"
+msgstr " (فعال)"
+
+#: includes/Sync/MediaChunkStore.php:80
+msgid "A media chunk is missing."
+msgstr "یک قطعه رسانه‌ای وجود ندارد."
+
+#: templates/admin/settings-page.php:18
+msgid "A modular backup workspace for full packages, granular exports, smart imports, and secure site-to-site sync."
+msgstr "یک محیط ماژولار برای بک‌آپ کامل، خروجی‌های جزئی، درون‌ریزی هوشمند و همگام‌سازی امن سایت‌به‌سایت."
+
+#: templates/admin/settings-page.php:139
+msgid "A selected theme directory plus theme-related wp_options values."
+msgstr "دایرکتوری قالب انتخاب‌شده به‌همراه مقادیر wp_options مرتبط با قالب."
+
+#: templates/admin/settings-page.php:53
+msgid "Actions"
+msgstr "عملیات"
+
+#: includes/Ajax/BackupAjaxController.php:260
+msgid "Adding files to ZIP package..."
+msgstr "در حال افزودن فایل‌ها به بسته ZIP..."
+
+#: includes/Admin/SettingsPage.php:33
+#: includes/Admin/SettingsPage.php:34
+msgid "Atlas Backup"
+msgstr "بک‌آپ اطلس"
+
+#: templates/admin/settings-page.php:17
+msgid "Atlas Backup Migration"
+msgstr "مهاجرت و بک‌آپ اطلس"
+
+#: templates/admin/settings-page.php:26
+msgid "Atlas Backup sections"
+msgstr "بخش‌های بک‌آپ اطلس"
+
+#: templates/admin/settings-page.php:16
+msgid "Backup & Migration Suite"
+msgstr "مجموعه بک‌آپ و مهاجرت"
+
+#: includes/Admin/SettingsPage.php:99
+msgid "Backup completed successfully."
+msgstr "بک‌آپ با موفقیت کامل شد."
+
+#: includes/Ajax/ManagementAjaxController.php:52
+msgid "Backup could not be deleted."
+msgstr "بک‌آپ حذف نشد."
+
+#: includes/Admin/SettingsPage.php:101
+#: includes/Ajax/ManagementAjaxController.php:55
+msgid "Backup deleted."
+msgstr "بک‌آپ حذف شد."
+
+#: templates/admin/settings-page.php:201
+msgid "Backup Destination"
+msgstr "مقصد بک‌آپ"
+
+#: includes/Backup/BackupJob.php:113
+msgid "Backup Error"
+msgstr "خطای بک‌آپ"
+
+#: includes/Admin/SettingsPage.php:98
+msgid "Backup failed. Please review the error details."
+msgstr "بک‌آپ ناموفق بود. لطفاً جزئیات خطا را بررسی کنید."
+
+#: includes/Ajax/BackupAjaxController.php:64
+msgid "Backup job was not found."
+msgstr "وظیفه بک‌آپ پیدا نشد."
+
+#: templates/admin/settings-page.php:27
+#: templates/admin/settings-page.php:38
+msgid "Backup Manager"
+msgstr "مدیریت بک‌آپ"
+
+#: includes/Ajax/BackupAjaxController.php:166
+msgid "Backup package is not ready."
+msgstr "بسته بک‌آپ آماده نیست."
+
+#: includes/Ajax/BackupAjaxController.php:268
+msgid "Backup package is ready."
+msgstr "بسته بک‌آپ آماده است."
+
+#: templates/admin/settings-page.php:68
+msgid "Batch Backup Engine"
+msgstr "موتور بک‌آپ دسته‌ای"
+
+#: templates/admin/settings-page.php:70
+msgid "Build a ZIP package from all WordPress files, export the database in chunks, and generate a standalone installer.php."
+msgstr "از همه فایل‌های وردپرس یک بسته ZIP بسازید، دیتابیس را به‌صورت قطعه‌ای خروجی بگیرید و یک installer.php مستقل تولید کنید."
+
+#: templates/admin/settings-page.php:175
+msgid "Choose Granular ZIP Package"
+msgstr "انتخاب بسته ZIP جزئی"
+
+#: templates/admin/settings-page.php:204
+msgid "Cloud Storage"
+msgstr "فضای ابری"
+
+#: templates/admin/settings-page.php:193
+msgid "Configure the first layer of your backup and migration workflow."
+msgstr "لایه اول جریان کاری بک‌آپ و مهاجرت خود را پیکربندی کنید."
+
+#: templates/admin/settings-page.php:235
+msgid "Connection Label"
+msgstr "برچسب اتصال"
+
+#: templates/admin/settings-page.php:115
+msgid "Create a focused package with data.json plus required media or files for a selected module."
+msgstr "برای ماژول انتخاب‌شده یک بسته متمرکز شامل data.json و رسانه‌ها یا فایل‌های موردنیاز بسازید."
+
+#: templates/admin/settings-page.php:69
+msgid "Create Full Migration Package"
+msgstr "ساخت بسته کامل مهاجرت"
+
+#: templates/admin/settings-page.php:155
+msgid "Create Granular Package"
+msgstr "ساخت بسته جزئی"
+
+#: templates/admin/settings-page.php:52
+msgid "Created"
+msgstr "ایجاد شده"
+
+#: includes/Admin/SettingsPage.php:102
+msgid "Creating granular export..."
+msgstr "در حال ساخت خروجی جزئی..."
+
+#: templates/admin/settings-page.php:91
+msgid "Database"
+msgstr "دیتابیس"
+
+#: includes/Admin/SettingsPage.php:104
+msgid "Delete this backup package?"
+msgstr "این بسته بک‌آپ حذف شود؟"
+
+#: templates/admin/settings-page.php:101
+msgid "Download installer.php"
+msgstr "دانلود installer.php"
+
+#: templates/admin/settings-page.php:98
+msgid "Download Package ZIP"
+msgstr "دانلود بسته ZIP"
+
+#: templates/admin/settings-page.php:133
+msgid "Elementor Pages"
+msgstr "برگه‌های المنتور"
+
+#: includes/Export/GranularExportService.php:421
+msgid "Elementor pages package"
+msgstr "بسته برگه‌های المنتور"
+
+#: templates/admin/settings-page.php:218
+msgid "Email Notifications"
+msgstr "اعلان‌های ایمیلی"
+
+#: templates/admin/settings-page.php:122
+msgid "Example: Woo products for staging"
+msgstr "مثال: محصولات ووکامرس برای staging"
+
+#: includes/Ajax/BackupAjaxController.php:262
+msgid "Exporting database in safe batches..."
+msgstr "در حال خروجی گرفتن دیتابیس در دسته‌های امن..."
+
+#: templates/admin/settings-page.php:85
+msgid "Files"
+msgstr "فایل‌ها"
+
+#: includes/Ajax/BackupAjaxController.php:266
+msgid "Finalizing migration package..."
+msgstr "در حال نهایی‌سازی بسته مهاجرت..."
+
+#: includes/Ajax/BackupAjaxController.php:145
+#: includes/Ajax/BackupAjaxController.php:156
+#: includes/Ajax/BackupAjaxController.php:175
+msgid "Forbidden"
+msgstr "ممنوع"
+
+#: templates/admin/settings-page.php:28
+msgid "Full Backup"
+msgstr "بک‌آپ کامل"
+
+#: templates/admin/settings-page.php:192
+msgid "General Settings"
+msgstr "تنظیمات عمومی"
+
+#: templates/admin/settings-page.php:239
+msgid "Generate 4-Hour Token"
+msgstr "تولید توکن ۴ ساعته"
+
+#: templates/admin/settings-page.php:232
+msgid "Generate a temporary REST API token for direct secure transfer between WordPress sites."
+msgstr "برای انتقال مستقیم و امن بین سایت‌های وردپرسی، یک توکن موقت REST API تولید کنید."
+
+#: includes/Ajax/BackupAjaxController.php:264
+msgid "Generating standalone installer.php..."
+msgstr "در حال تولید installer.php مستقل..."
+
+#: templates/admin/settings-page.php:29
+#: templates/admin/settings-page.php:114
+msgid "Granular Export"
+msgstr "خروجی جزئی"
+
+#: includes/Ajax/ManagementAjaxController.php:71
+msgid "Granular export failed."
+msgstr "خروجی جزئی ناموفق بود."
+
+#: includes/Export/GranularExportService.php:425
+msgid "Granular package"
+msgstr "بسته جزئی"
+
+#: templates/admin/settings-page.php:81
+msgid "Idle"
+msgstr "بیکار"
+
+#: includes/Import/SmartImporterService.php:57
+msgid "Import package data.json is invalid."
+msgstr "فایل data.json بسته درون‌ریزی نامعتبر است."
+
+#: includes/Import/SmartImporterService.php:160
+msgid "Imported %d Elementor pages/templates with %d remapped media items."
+msgstr "%d برگه/قالب المنتور با %d رسانه بازنگاشت‌شده درون‌ریزی شد."
+
+#: includes/Import/SmartImporterService.php:102
+msgid "Imported %d WooCommerce products with %d remapped media items."
+msgstr "%d محصول ووکامرس با %d رسانه بازنگاشت‌شده درون‌ریزی شد."
+
+#: includes/Import/SmartImporterService.php:195
+msgid "Imported theme package for %s."
+msgstr "بسته قالب برای %s درون‌ریزی شد."
+
+#: includes/Admin/SettingsPage.php:103
+msgid "Importing package..."
+msgstr "در حال درون‌ریزی بسته..."
+
+#: includes/Ajax/BackupAjaxController.php:174
+msgid "Invalid backup file type."
+msgstr "نوع فایل بک‌آپ نامعتبر است."
+
+#: includes/Ajax/BackupAjaxController.php:155
+msgid "Invalid download request."
+msgstr "درخواست دانلود نامعتبر است."
+
+#: includes/Sync/MediaChunkStore.php:32
+msgid "Invalid media chunk payload."
+msgstr "داده ارسالی قطعه رسانه نامعتبر است."
+
+#: includes/Sync/ProductImporter.php:24
+msgid "Invalid product payload."
+msgstr "داده ارسالی محصول نامعتبر است."
+
+#: templates/admin/settings-page.php:57
+msgid "Loading backup packages..."
+msgstr "در حال بارگذاری بسته‌های بک‌آپ..."
+
+#: includes/Admin/SettingsPage.php:100
+msgid "Loading..."
+msgstr "در حال بارگذاری..."
+
+#: templates/admin/settings-page.php:205
+msgid "Local + Cloud"
+msgstr "محلی + ابری"
+
+#: templates/admin/settings-page.php:203
+msgid "Local Storage"
+msgstr "ذخیره‌سازی محلی"
+
+#: includes/Sync/MediaChunkStore.php:94
+msgid "Media checksum verification failed."
+msgstr "اعتبارسنجی checksum رسانه ناموفق بود."
+
+#: includes/Sync/RestSyncController.php:170
+msgid "Media chunk could not be read."
+msgstr "قطعه رسانه خوانده نشد."
+
+#: includes/Sync/MediaChunkStore.php:36
+msgid "Media chunk index is out of range."
+msgstr "اندیس قطعه رسانه خارج از محدوده است."
+
+#: includes/Sync/MediaChunkStore.php:42
+msgid "Media chunk is not valid base64."
+msgstr "قطعه رسانه base64 معتبر نیست."
+
+#: includes/Sync/MediaChunkStore.php:46
+msgid "Media chunk is too large."
+msgstr "قطعه رسانه بیش از حد بزرگ است."
+
+#: includes/Sync/RestSyncController.php:152
+msgid "Media chunk offset is out of range."
+msgstr "آفست قطعه رسانه خارج از محدوده است."
+
+#: includes/Sync/RestSyncController.php:158
+msgid "Media file could not be opened."
+msgstr "فایل رسانه باز نشد."
+
+#: includes/Sync/RestSyncController.php:163
+msgid "Media file could not be read from the requested offset."
+msgstr "فایل رسانه از آفست درخواستی خوانده نشد."
+
+#: includes/Sync/RestSyncController.php:145
+msgid "Media file was not found."
+msgstr "فایل رسانه پیدا نشد."
+
+#: includes/Ajax/BackupAjaxController.php:57
+#: includes/Ajax/ManagementAjaxController.php:48
+msgid "Missing backup job ID."
+msgstr "شناسه وظیفه بک‌آپ وجود ندارد."
+
+#: includes/Sync/AuthTokenService.php:59
+msgid "Missing sync token."
+msgstr "توکن همگام‌سازی وجود ندارد."
+
+#: includes/Import/SmartImporterService.php:27
+msgid "No import package was uploaded."
+msgstr "هیچ بسته‌ای برای درون‌ریزی آپلود نشده است."
+
+#: includes/Ajax/BackupAjaxController.php:167
+#: includes/Ajax/BackupAjaxController.php:187
+msgid "Not Found"
+msgstr "پیدا نشد"
+
+#: includes/Export/GranularExportService.php:47
+msgid "Nothing exportable was found for the selected module."
+msgstr "برای ماژول انتخاب‌شده موردی قابل خروجی گرفتن پیدا نشد."
+
+#: templates/admin/settings-page.php:49
+msgid "Package"
+msgstr "بسته"
+
+#: templates/admin/settings-page.php:121
+msgid "Package Label"
+msgstr "برچسب بسته"
+
+#: templates/admin/settings-page.php:134
+msgid "Pages/templates with Elementor metadata for smart restore."
+msgstr "برگه‌ها/قالب‌های دارای متادیتای المنتور برای بازگردانی هوشمند."
+
+#: includes/Ajax/BackupAjaxController.php:144
+#: includes/Ajax/BackupAjaxController.php:205
+#: includes/Ajax/ManagementAjaxController.php:98
+#: includes/Sync/RestSyncController.php:80
+msgid "Permission denied."
+msgstr "دسترسی رد شد."
+
+#: includes/Export/GranularExportService.php:25
+#: includes/Import/SmartImporterService.php:23
+msgid "PHP ZipArchive extension is not available."
+msgstr "اکستنشن PHP ZipArchive در دسترس نیست."
+
+#: templates/admin/settings-page.php:21
+msgid "Plugin Status"
+msgstr "وضعیت افزونه"
+
+#: includes/Ajax/BackupAjaxController.php:270
+msgid "Processing backup..."
+msgstr "در حال پردازش بک‌آپ..."
+
+#: includes/Sync/RestSyncController.php:119
+msgid "Product was not found."
+msgstr "محصول پیدا نشد."
+
+#: templates/admin/settings-page.php:129
+msgid "Products, product meta, terms, featured images, and galleries."
+msgstr "محصولات، متای محصولات، دسته‌ها/برچسب‌ها، تصاویر شاخص و گالری‌ها."
+
+#: templates/admin/settings-page.php:22
+msgid "Ready"
+msgstr "آماده"
+
+#: templates/admin/settings-page.php:41
+msgid "Refresh List"
+msgstr "تازه‌سازی فهرست"
+
+#: includes/Ajax/BackupAjaxController.php:186
+msgid "Requested backup file was not found."
+msgstr "فایل بک‌آپ درخواستی پیدا نشد."
+
+#: templates/admin/settings-page.php:210
+msgid "Retention Days"
+msgstr "روزهای نگهداری"
+
+#: templates/admin/settings-page.php:224
+msgid "Save Settings"
+msgstr "ذخیره تنظیمات"
+
+#: includes/Ajax/BackupAjaxController.php:258
+msgid "Scanning WordPress files..."
+msgstr "در حال اسکن فایل‌های وردپرس..."
+
+#: templates/admin/settings-page.php:219
+msgid "Send backup and migration reports to site administrators."
+msgstr "گزارش‌های بک‌آپ و مهاجرت را برای مدیران سایت ارسال کنید."
+
+#: includes/Admin/SettingsPage.php:44
+#: includes/Admin/SettingsPage.php:45
+#: includes/Admin/SettingsPage.php:144
+msgid "Settings"
+msgstr "تنظیمات"
+
+#: templates/admin/settings-page.php:31
+msgid "Settings & Sync"
+msgstr "تنظیمات و همگام‌سازی"
+
+#: templates/admin/settings-page.php:231
+msgid "Site-to-Site Sync"
+msgstr "همگام‌سازی سایت‌به‌سایت"
+
+#: templates/admin/settings-page.php:51
+msgid "Size"
+msgstr "اندازه"
+
+#: templates/admin/settings-page.php:30
+#: templates/admin/settings-page.php:167
+msgid "Smart Importer"
+msgstr "درون‌ریز هوشمند"
+
+#: templates/admin/settings-page.php:74
+msgid "Start Full Backup"
+msgstr "شروع بک‌آپ کامل"
+
+#: includes/Admin/SettingsPage.php:97
+msgid "Starting backup..."
+msgstr "در حال شروع بک‌آپ..."
+
+#: templates/admin/settings-page.php:176
+msgid "Supported now: WooCommerce products, Elementor pages, and theme packages generated by Atlas."
+msgstr "در حال حاضر پشتیبانی می‌شود: محصولات ووکامرس، برگه‌های المنتور و بسته‌های قالب تولیدشده توسط اطلس."
+
+#: includes/Sync/AuthTokenService.php:69
+msgid "Sync token authentication failed."
+msgstr "احراز هویت توکن همگام‌سازی ناموفق بود."
+
+#: includes/Admin/SettingsPage.php:105
+msgid "Sync token generated. It expires in 4 hours."
+msgstr "توکن همگام‌سازی تولید شد. این توکن تا ۴ ساعت دیگر منقضی می‌شود."
+
+#: includes/Sync/AuthTokenService.php:65
+msgid "Sync token is invalid or expired."
+msgstr "توکن همگام‌سازی نامعتبر یا منقضی شده است."
+
+#: templates/admin/settings-page.php:236
+msgid "Target site name"
+msgstr "نام سایت مقصد"
+
+#: templates/admin/settings-page.php:144
+msgid "Theme"
+msgstr "قالب"
+
+#: templates/admin/settings-page.php:138
+msgid "Theme + Options"
+msgstr "قالب + گزینه‌ها"
+
+#: includes/Export/GranularExportService.php:422
+msgid "Theme package"
+msgstr "بسته قالب"
+
+#: includes/Import/SmartImporterService.php:173
+msgid "Theme slug is missing from package."
+msgstr "شناسه قالب در بسته وجود ندارد."
+
+#: includes/Import/SmartImporterService.php:76
+msgid "This granular package type is not supported."
+msgstr "این نوع بسته جزئی پشتیبانی نمی‌شود."
+
+#: templates/admin/settings-page.php:243
+msgid "Token"
+msgstr "توکن"
+
+#: templates/admin/settings-page.php:242
+msgid "Token ID"
+msgstr "شناسه توکن"
+
+#: templates/admin/settings-page.php:50
+msgid "Type"
+msgstr "نوع"
+
+#: includes/Sync/MediaChunkStore.php:72
+msgid "Unable to assemble media file."
+msgstr "فایل رسانه مونتاژ نشد."
+
+#: includes/Export/GranularExportService.php:61
+#: includes/Export/GranularExportService.php:66
+msgid "Unable to create granular package."
+msgstr "بسته جزئی ساخته نشد."
+
+#: includes/Export/GranularExportService.php:77
+#: includes/Export/GranularExportService.php:82
+msgid "Unable to finalize granular package."
+msgstr "بسته جزئی نهایی نشد."
+
+#: includes/Import/SmartImporterService.php:46
+msgid "Unable to open import package."
+msgstr "بسته درون‌ریزی باز نشد."
+
+#: includes/Sync/MediaChunkStore.php:87
+msgid "Unable to write assembled media file."
+msgstr "فایل رسانه مونتاژشده نوشته نشد."
+
+#: includes/Backup/BackupJob.php:112
+msgid "Unable to write backup job state."
+msgstr "وضعیت وظیفه بک‌آپ نوشته نشد."
+
+#: includes/Ajax/BackupAjaxController.php:85
+msgid "Unable to write compatibility manifest."
+msgstr "مانیفست سازگاری نوشته نشد."
+
+#: includes/Sync/MediaChunkStore.php:57
+msgid "Unable to write media chunk."
+msgstr "قطعه رسانه نوشته نشد."
+
+#: templates/admin/settings-page.php:179
+msgid "Upload & Import"
+msgstr "آپلود و درون‌ریزی"
+
+#: templates/admin/settings-page.php:168
+msgid "Upload a granular package from another site and import only the supported data into this site."
+msgstr "یک بسته جزئی را از سایت دیگر آپلود کنید و فقط داده‌های پشتیبانی‌شده را در این سایت درون‌ریزی کنید."
+
+#: templates/admin/settings-page.php:255
+msgid "Version"
+msgstr "نسخه"
+
+#: templates/admin/settings-page.php:39
+msgid "View complete and granular backup packages, download them securely, or remove old packages."
+msgstr "بسته‌های بک‌آپ کامل و جزئی را مشاهده کنید، آن‌ها را به‌صورت امن دانلود کنید یا بسته‌های قدیمی را حذف کنید."
+
+#: templates/admin/settings-page.php:80
+msgid "Waiting..."
+msgstr "در انتظار..."
+
+#: templates/admin/settings-page.php:128
+msgid "WooCommerce Products"
+msgstr "محصولات ووکامرس"
+
+#: includes/Export/GranularExportService.php:420
+msgid "WooCommerce products package"
+msgstr "بسته محصولات ووکامرس"
+
+#: includes/Admin/SettingsPage.php:114
+msgid "You do not have permission to access this page."
+msgstr "شما اجازه دسترسی به این صفحه را ندارید."
+
