@@ -13,6 +13,12 @@ if (! defined('ABSPATH')) {
 
 final class ProductPayloadBuilder
 {
+    /**
+     * Builds a portable product or variation payload with parent and taxonomy IDs.
+     *
+     * @param int $product_id Product or variation ID.
+     * @return array
+     */
     public function build(int $product_id): array
     {
         $post = get_post($product_id);
@@ -47,6 +53,12 @@ final class ProductPayloadBuilder
         ];
     }
 
+    /**
+     * Returns post meta safe for transport.
+     *
+     * @param int $post_id Post ID.
+     * @return array
+     */
     private function safeMeta(int $post_id): array
     {
         $meta = get_post_meta($post_id);
@@ -64,6 +76,12 @@ final class ProductPayloadBuilder
         return $safe;
     }
 
+    /**
+     * Returns assigned taxonomy terms and ancestors.
+     *
+     * @param int $post_id Post ID.
+     * @return array
+     */
     private function terms(int $post_id): array
     {
         $taxonomies = get_object_taxonomies((string) get_post_type($post_id));
@@ -82,6 +100,13 @@ final class ProductPayloadBuilder
         return $terms;
     }
 
+    /**
+     * Adds assigned terms plus ancestors so parent/child taxonomies can be rebuilt.
+     *
+     * @param array  $post_terms Assigned term objects.
+     * @param string $taxonomy Taxonomy name.
+     * @return array
+     */
     private function termPayloadsWithAncestors(array $post_terms, string $taxonomy): array
     {
         $items = [];
@@ -107,6 +132,13 @@ final class ProductPayloadBuilder
         return array_values($items);
     }
 
+    /**
+     * Builds a taxonomy term payload with term_id, term_taxonomy_id, and parent IDs.
+     *
+     * @param \WP_Term $term Term object.
+     * @param bool     $assigned Whether the source post is directly assigned to this term.
+     * @return array
+     */
     private function termPayload($term, bool $assigned): array
     {
         $parent = absint($term->parent);
@@ -124,6 +156,13 @@ final class ProductPayloadBuilder
         ];
     }
 
+    /**
+     * Looks up term_taxonomy_id for a source term.
+     *
+     * @param int    $term_id Term ID.
+     * @param string $taxonomy Taxonomy name.
+     * @return int
+     */
     private function termTaxonomyId(int $term_id, string $taxonomy): int
     {
         $term = get_term($term_id, $taxonomy);
@@ -131,6 +170,12 @@ final class ProductPayloadBuilder
         return is_wp_error($term) || ! $term ? 0 : absint($term->term_taxonomy_id);
     }
 
+    /**
+     * Returns source product attachment IDs.
+     *
+     * @param int $product_id Product ID.
+     * @return array
+     */
     private function attachmentIds(int $product_id): array
     {
         $ids = [];
@@ -149,6 +194,12 @@ final class ProductPayloadBuilder
         return array_values(array_unique($ids));
     }
 
+    /**
+     * Builds source attachment metadata for packaging or streaming.
+     *
+     * @param int $attachment_id Attachment ID.
+     * @return array
+     */
     private function attachmentPayload(int $attachment_id): array
     {
         $path = get_attached_file($attachment_id);

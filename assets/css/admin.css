@@ -537,6 +537,30 @@
     color: #991b1b;
 }
 
+.abm-import-progress {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.abm-import-progress[hidden],
+.abm-cleanup-import[hidden] {
+    display: none;
+}
+
+.abm-import-status {
+    color: #64748b;
+    font-weight: 700;
+}
+
+.abm-cleanup-actions {
+    justify-content: flex-start;
+}
+
 .abm-choice-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

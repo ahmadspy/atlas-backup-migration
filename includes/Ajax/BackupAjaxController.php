@@ -18,12 +18,18 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+/**
+ * Handles chunked full backup AJAX actions and protected downloads.
+ */
 final class BackupAjaxController
 {
     private const NONCE_ACTION = 'abm_backup_nonce';
     private const FILE_BATCH_SIZE = 80;
     private const DB_BATCH_SIZE = 120;
 
+    /**
+     * Registers AJAX and admin-post hooks.
+     */
     public function register(): void
     {
         add_action('wp_ajax_abm_start_backup', [$this, 'start']);
@@ -31,11 +37,19 @@ final class BackupAjaxController
         add_action('admin_post_abm_download_backup', [$this, 'download']);
     }
 
+    /**
+     * Returns the nonce action used for backup requests.
+     *
+     * @return string
+     */
     public static function nonceAction(): string
     {
         return self::NONCE_ACTION;
     }
 
+    /**
+     * Creates a new backup job and returns its initial state.
+     */
     public function start(): void
     {
         $this->guard();
@@ -45,6 +59,9 @@ final class BackupAjaxController
         wp_send_json_success($this->response($job->state(), $job));
     }
 
+    /**
+     * Processes the next backup phase chunk.
+     */
     public function process(): void
     {
         global $wpdb;
@@ -137,6 +154,9 @@ final class BackupAjaxController
         wp_send_json_success($this->response($state, $job));
     }
 
+    /**
+     * Streams a nonce-protected backup package or installer file.
+     */
     public function download(): void
     {
         if (! current_user_can('manage_options')) {
@@ -197,6 +217,9 @@ final class BackupAjaxController
         exit;
     }
 
+    /**
+     * Verifies nonce and administrator capability for backup actions.
+     */
     private function guard(): void
     {
         check_ajax_referer(self::NONCE_ACTION, 'nonce');
@@ -206,6 +229,13 @@ final class BackupAjaxController
         }
     }
 
+    /**
+     * Builds a normalized backup progress response.
+     *
+     * @param array     $state Backup job state.
+     * @param BackupJob $job Backup job.
+     * @return array
+     */
     private function response(array $state, BackupJob $job): array
     {
         $total_files = max(1, absint($state['total_files'] ?? count($state['files'] ?? [])));
@@ -234,6 +264,12 @@ final class BackupAjaxController
         ];
     }
 
+    /**
+     * Builds a compact compatibility summary for the UI.
+     *
+     * @param array $state Backup job state.
+     * @return array
+     */
     private function compatibilitySummary(array $state): array
     {
         $plugins = $state['compatibility']['plugins'] ?? [];
@@ -251,6 +287,12 @@ final class BackupAjaxController
         return $summary;
     }
 
+    /**
+     * Returns the localized progress message for a backup phase.
+     *
+     * @param array $state Backup job state.
+     * @return string
+     */
     private function message(array $state): string
     {
         switch ($state['phase'] ?? 'scan') {

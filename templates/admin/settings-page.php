@@ -181,6 +181,17 @@ if (! defined('ABSPATH')) {
                 </form>
 
                 <div class="abm-import-result" hidden></div>
+                <div class="abm-import-progress" hidden>
+                    <div class="abm-progress-row">
+                        <span><?php esc_html_e('Import', 'atlas-backup-migration'); ?></span>
+                        <div class="abm-progress"><span class="abm-import-bar"></span></div>
+                        <strong class="abm-import-percent">0%</strong>
+                    </div>
+                    <small class="abm-import-status"></small>
+                </div>
+                <div class="abm-actions abm-cleanup-actions">
+                    <button type="button" class="button abm-cleanup-import" hidden><?php esc_html_e('Delete Temporary Import Files', 'atlas-backup-migration'); ?></button>
+                </div>
             </div>
         </section>
 

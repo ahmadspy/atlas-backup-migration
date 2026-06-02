@@ -13,9 +13,15 @@ if (! defined('ABSPATH')) {
 
 final class BackupRepository
 {
+    /**
+     * Returns all discoverable backup packages.
+     *
+     * @return array
+     */
     public function all(): array
     {
         $base_dir = $this->baseDir();
+        $this->protectStorage();
         $items = [];
 
         if (! is_dir($base_dir)) {
@@ -63,6 +69,12 @@ final class BackupRepository
         return $items;
     }
 
+    /**
+     * Deletes one backup job directory.
+     *
+     * @param string $job_id Backup job ID.
+     * @return bool
+     */
     public function delete(string $job_id): bool
     {
         $job = new BackupJob($job_id);
@@ -78,6 +90,11 @@ final class BackupRepository
         return ! is_dir($directory);
     }
 
+    /**
+     * Returns the base backup storage directory.
+     *
+     * @return string
+     */
     public function baseDir(): string
     {
         $upload_dir = wp_upload_dir(null, false);
@@ -85,6 +102,11 @@ final class BackupRepository
         return trailingslashit($upload_dir['basedir']) . 'atlas-backup-migration';
     }
 
+    /**
+     * Deletes a directory recursively with writable checks.
+     *
+     * @param string $directory Directory to delete.
+     */
     private function deleteDirectory(string $directory): void
     {
         foreach (scandir($directory) ?: [] as $entry) {
@@ -100,10 +122,30 @@ final class BackupRepository
             }
 
             if (is_file($path)) {
-                unlink($path);
+                @unlink($path);
             }
         }
 
-        rmdir($directory);
+        @rmdir($directory);
+    }
+
+    /**
+     * Protects backup storage from direct web access.
+     */
+    private function protectStorage(): void
+    {
+        $directory = $this->baseDir();
+        wp_mkdir_p($directory);
+
+        $index = trailingslashit($directory) . 'index.php';
+        $htaccess = trailingslashit($directory) . '.htaccess';
+
+        if (! file_exists($index)) {
+            file_put_contents($index, '', LOCK_EX);
+        }
+
+        if (! file_exists($htaccess)) {
+            file_put_contents($htaccess, "Deny from all\n", LOCK_EX);
+        }
     }
 }

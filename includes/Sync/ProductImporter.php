@@ -16,6 +16,17 @@ if (! defined('ABSPATH')) {
 
 final class ProductImporter
 {
+    /**
+     * Imports or updates one WooCommerce product payload and returns accumulated ID maps.
+     *
+     * @param array $payload Source product payload.
+     * @param array $id_map Source-to-target attachment ID map.
+     * @param array $product_id_map Source-to-target product ID map.
+     * @param array $term_id_map Source-to-target term ID map.
+     * @param array $term_taxonomy_id_map Source-to-target term_taxonomy_id map.
+     * @param bool  $finalize_relationships Whether to immediately remap delayed parent relationships.
+     * @return array|WP_Error
+     */
     public function import(array $payload, array $id_map = [], array $product_id_map = [], array $term_id_map = [], array $term_taxonomy_id_map = [], bool $finalize_relationships = true)
     {
         $post_data = is_array($payload['post'] ?? null) ? $payload['post'] : [];
@@ -26,6 +37,7 @@ final class ProductImporter
 
         $existing_id = $this->findExisting(absint($payload['source_id'] ?? 0));
         $source_parent_id = absint($post_data['post_parent'] ?? 0);
+        $mapped_parent_id = $this->mappedProductId($source_parent_id, $product_id_map);
         $post_data = [
             'ID' => $existing_id,
             'post_type' => in_array($post_data['post_type'], ['product', 'product_variation'], true) ? $post_data['post_type'] : 'product',
@@ -34,7 +46,7 @@ final class ProductImporter
             'post_content' => wp_kses_post((string) ($post_data['post_content'] ?? '')),
             'post_excerpt' => wp_kses_post((string) ($post_data['post_excerpt'] ?? '')),
             'post_name' => sanitize_title($post_data['post_name'] ?? ''),
-            'post_parent' => $this->mappedProductId($source_parent_id, $product_id_map),
+            'post_parent' => $mapped_parent_id,
             'menu_order' => absint($post_data['menu_order'] ?? 0),
             'meta_input' => [
                 '_abm_source_product_id' => absint($payload['source_id'] ?? 0),
@@ -55,13 +67,13 @@ final class ProductImporter
             $product_id_map[$source_product_id] = (int) $product_id;
         }
 
-        $this->importMeta((int) $product_id, is_array($payload['meta'] ?? null) ? $payload['meta'] : [], $id_map);
         $term_relationships_remapped = $this->importTerms(
             (int) $product_id,
             is_array($payload['terms'] ?? null) ? $payload['terms'] : [],
             $term_id_map,
             $term_taxonomy_id_map
         );
+        $this->importMeta((int) $product_id, is_array($payload['meta'] ?? null) ? $payload['meta'] : [], $id_map, $product_id_map, $term_id_map, $term_taxonomy_id_map);
         $this->attachMedia((int) $product_id, is_array($payload['media'] ?? null) ? $payload['media'] : [], $id_map);
         $variation_parents_remapped = $finalize_relationships ? $this->remapProductParents($product_id_map) : 0;
         $term_parents_remapped = $finalize_relationships ? $this->remapTermParents($term_id_map, $term_taxonomy_id_map) : 0;
@@ -80,6 +92,12 @@ final class ProductImporter
         ];
     }
 
+    /**
+     * Remaps imported variation post_parent values after all products are known.
+     *
+     * @param array $product_id_map Source-to-target product ID map.
+     * @return int Number of updated variations.
+     */
     public function remapProductParents(array $product_id_map): int
     {
         if ([] === $product_id_map) {
@@ -116,6 +134,13 @@ final class ProductImporter
         return $updated;
     }
 
+    /**
+     * Remaps taxonomy parent IDs after all terms are known.
+     *
+     * @param array $term_id_map Source-to-target term ID map.
+     * @param array $term_taxonomy_id_map Source-to-target term_taxonomy_id map.
+     * @return int Number of updated terms.
+     */
     public function remapTermParents(array $term_id_map, array $term_taxonomy_id_map = []): int
     {
         if ([] === $term_id_map && [] === $term_taxonomy_id_map) {
@@ -150,6 +175,12 @@ final class ProductImporter
         return $updated;
     }
 
+    /**
+     * Finds an existing imported product by its source product ID.
+     *
+     * @param int $source_id Source product ID.
+     * @return int Existing destination product ID or zero.
+     */
     private function findExisting(int $source_id): int
     {
         if (! $source_id) {
@@ -168,6 +199,13 @@ final class ProductImporter
         return $posts ? absint($posts[0]) : 0;
     }
 
+    /**
+     * Resolves a source product ID to a destination product ID.
+     *
+     * @param int   $source_id Source product ID.
+     * @param array $product_id_map Source-to-target product ID map.
+     * @return int
+     */
     private function mappedProductId(int $source_id, array $product_id_map): int
     {
         if (! $source_id) {
@@ -181,7 +219,17 @@ final class ProductImporter
         return $this->findExisting($source_id);
     }
 
-    private function importMeta(int $product_id, array $meta, array $id_map): void
+    /**
+     * Imports post meta while remapping known media, product parent, and taxonomy IDs.
+     *
+     * @param int   $product_id Destination product ID.
+     * @param array $meta Source meta values.
+     * @param array $id_map Source-to-target attachment ID map.
+     * @param array $product_id_map Source-to-target product ID map.
+     * @param array $term_id_map Source-to-target term ID map.
+     * @param array $term_taxonomy_id_map Source-to-target term_taxonomy_id map.
+     */
+    private function importMeta(int $product_id, array $meta, array $id_map, array $product_id_map, array $term_id_map, array $term_taxonomy_id_map): void
     {
         $blocked = ['_edit_lock', '_edit_last', '_thumbnail_id', '_product_image_gallery'];
         $remapper = new IdRemapper();
@@ -196,31 +244,69 @@ final class ProductImporter
             delete_post_meta($product_id, $key);
 
             foreach ((array) $values as $value) {
-                add_post_meta($product_id, $key, $this->sanitizeMetaValue($this->remapMetaValue($key, $value, $id_map, $remapper)));
+                add_post_meta($product_id, $key, $this->sanitizeMetaValue($this->remapMetaValue($key, $value, $id_map, $product_id_map, $term_id_map, $term_taxonomy_id_map, $remapper)));
             }
         }
     }
 
-    private function remapMetaValue(string $key, $value, array $id_map, IdRemapper $remapper)
+    /**
+     * Remaps IDs inside selected meta values.
+     *
+     * @param string     $key Meta key.
+     * @param mixed      $value Meta value.
+     * @param array      $id_map Source-to-target attachment ID map.
+     * @param array      $product_id_map Source-to-target product ID map.
+     * @param array      $term_id_map Source-to-target term ID map.
+     * @param array      $term_taxonomy_id_map Source-to-target term_taxonomy_id map.
+     * @param IdRemapper $remapper ID remapper instance.
+     * @return mixed
+     */
+    private function remapMetaValue(string $key, $value, array $id_map, array $product_id_map, array $term_id_map, array $term_taxonomy_id_map, IdRemapper $remapper)
     {
-        if ([] === $id_map) {
-            return $value;
-        }
-
         $media_keys = [
             '_downloadable_files',
             '_wc_variation_gallery_images',
             '_product_image_gallery',
             '_thumbnail_id',
         ];
+        $maps = [
+            'media' => $id_map,
+            'product' => $product_id_map,
+            'term' => $term_id_map,
+            'term_taxonomy' => $term_taxonomy_id_map,
+        ];
 
-        if (in_array($key, $media_keys, true) || false !== strpos($key, 'image') || false !== strpos($key, 'attachment') || false !== strpos($key, 'media') || false !== strpos($key, 'gallery')) {
+        $contextual_value = $remapper->remapKnownIds($value, $maps, $key);
+
+        if ($contextual_value !== $value) {
+            return $contextual_value;
+        }
+
+        if ([] !== $id_map && (in_array($key, $media_keys, true) || false !== strpos($key, 'image') || false !== strpos($key, 'attachment') || false !== strpos($key, 'media') || false !== strpos($key, 'gallery'))) {
             return $remapper->remapValue($value, $id_map);
+        }
+
+        if ([] !== $product_id_map && (false !== strpos($key, 'parent') || false !== strpos($key, 'variation') || false !== strpos($key, 'product_id'))) {
+            return $remapper->remapValue($value, $product_id_map);
+        }
+
+        if ([] !== $term_taxonomy_id_map && (false !== strpos($key, 'term_taxonomy_id') || false !== strpos($key, 'term_relationship'))) {
+            return $remapper->remapValue($value, $term_taxonomy_id_map);
+        }
+
+        if ([] !== $term_id_map && (false !== strpos($key, 'term_id') || false !== strpos($key, 'parent_term') || false !== strpos($key, 'category') || false !== strpos($key, 'tag') || false !== strpos($key, 'taxonomy') || false !== strpos($key, 'attribute'))) {
+            return $remapper->remapValue($value, $term_id_map);
         }
 
         return $value;
     }
 
+    /**
+     * Sanitizes meta values before storing them.
+     *
+     * @param mixed $value Raw meta value.
+     * @return mixed
+     */
     private function sanitizeMetaValue($value)
     {
         if (is_array($value)) {
@@ -234,6 +320,15 @@ final class ProductImporter
         return is_scalar($value) || null === $value ? wp_kses_post((string) $value) : '';
     }
 
+    /**
+     * Imports taxonomy terms and object relationships for a product.
+     *
+     * @param int   $product_id Destination product ID.
+     * @param array $terms Source terms grouped by taxonomy.
+     * @param array $term_id_map Source-to-target term ID map.
+     * @param array $term_taxonomy_id_map Source-to-target term_taxonomy_id map.
+     * @return int Number of remapped relationships.
+     */
     private function importTerms(int $product_id, array $terms, array &$term_id_map, array &$term_taxonomy_id_map): int
     {
         $relationships = 0;
@@ -310,6 +405,16 @@ final class ProductImporter
         return $relationships;
     }
 
+    /**
+     * Resolves a source parent term into a target parent term ID.
+     *
+     * @param string $taxonomy Taxonomy name.
+     * @param int    $source_parent_id Source parent term ID.
+     * @param int    $source_parent_term_taxonomy_id Source parent term_taxonomy_id.
+     * @param array  $term_id_map Source-to-target term ID map.
+     * @param array  $term_taxonomy_id_map Source-to-target term_taxonomy_id map.
+     * @return int
+     */
     private function mappedParentTermId(string $taxonomy, int $source_parent_id, int $source_parent_term_taxonomy_id, array $term_id_map, array $term_taxonomy_id_map): int
     {
         if ('' === $taxonomy || (! $source_parent_id && ! $source_parent_term_taxonomy_id)) {
@@ -355,6 +460,13 @@ final class ProductImporter
         return is_wp_error($matches) || empty($matches) ? 0 : absint($matches[0]);
     }
 
+    /**
+     * Returns target term IDs contained in term maps.
+     *
+     * @param array $term_id_map Source-to-target term ID map.
+     * @param array $term_taxonomy_id_map Source-to-target term_taxonomy_id map.
+     * @return array
+     */
     private function targetTermIdsFromMaps(array $term_id_map, array $term_taxonomy_id_map): array
     {
         $term_ids = array_values(array_filter(array_map('absint', $term_id_map)));
@@ -370,6 +482,13 @@ final class ProductImporter
         return array_values(array_unique(array_filter($term_ids)));
     }
 
+    /**
+     * Returns terms that may need delayed parent remapping.
+     *
+     * @param array $term_id_map Source-to-target term ID map.
+     * @param array $term_taxonomy_id_map Source-to-target term_taxonomy_id map.
+     * @return array
+     */
     private function targetTermIdsForParentRemap(array $term_id_map, array $term_taxonomy_id_map): array
     {
         $term_ids = $this->targetTermIdsFromMaps($term_id_map, $term_taxonomy_id_map);
@@ -406,6 +525,13 @@ final class ProductImporter
         return array_values(array_unique(array_filter($term_ids)));
     }
 
+    /**
+     * Looks up the term_taxonomy_id for a term in a taxonomy.
+     *
+     * @param int    $term_id Term ID.
+     * @param string $taxonomy Taxonomy name.
+     * @return int
+     */
     private function termTaxonomyId(int $term_id, string $taxonomy): int
     {
         $term = get_term($term_id, $taxonomy);
@@ -413,6 +539,14 @@ final class ProductImporter
         return is_wp_error($term) || ! $term ? 0 : absint($term->term_taxonomy_id);
     }
 
+    /**
+     * Checks whether a mapped term belongs to an expected term_taxonomy_id.
+     *
+     * @param int    $term_id Term ID.
+     * @param string $taxonomy Taxonomy name.
+     * @param int    $expected_term_taxonomy_id Expected term_taxonomy_id.
+     * @return bool
+     */
     private function termTaxonomyMatches(int $term_id, string $taxonomy, int $expected_term_taxonomy_id): bool
     {
         if (! $expected_term_taxonomy_id) {
@@ -422,6 +556,13 @@ final class ProductImporter
         return $this->termTaxonomyId($term_id, $taxonomy) === $expected_term_taxonomy_id;
     }
 
+    /**
+     * Resolves a term object by term_taxonomy_id.
+     *
+     * @param int    $term_taxonomy_id Term taxonomy ID.
+     * @param string $taxonomy Optional taxonomy constraint.
+     * @return \WP_Term|false
+     */
     private function getTermByTermTaxonomyId(int $term_taxonomy_id, string $taxonomy = '')
     {
         global $wpdb;
@@ -443,6 +584,14 @@ final class ProductImporter
         return is_wp_error($term) ? false : $term;
     }
 
+    /**
+     * Applies object-term relationships using term_taxonomy_id values.
+     *
+     * @param int    $product_id Destination product ID.
+     * @param string $taxonomy Taxonomy name.
+     * @param array  $term_taxonomy_ids Target term_taxonomy_id values.
+     * @return int Number of stored relationships.
+     */
     private function setObjectTermRelationships(int $product_id, string $taxonomy, array $term_taxonomy_ids): int
     {
         global $wpdb;
@@ -480,6 +629,13 @@ final class ProductImporter
         );
     }
 
+    /**
+     * Attaches remapped media to product thumbnail and gallery fields.
+     *
+     * @param int   $product_id Destination product ID.
+     * @param array $media Source media metadata.
+     * @param array $id_map Source-to-target attachment ID map.
+     */
     private function attachMedia(int $product_id, array $media, array $id_map): void
     {
         $attachment_ids = [];

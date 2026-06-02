@@ -40,6 +40,12 @@
     const granularResult = document.querySelector('.abm-granular-result');
     const importForm = document.querySelector('.abm-import-form');
     const importResult = document.querySelector('.abm-import-result');
+    const importProgress = document.querySelector('.abm-import-progress');
+    const importBar = document.querySelector('.abm-import-bar');
+    const importPercent = document.querySelector('.abm-import-percent');
+    const importStatus = document.querySelector('.abm-import-status');
+    const importCleanup = document.querySelector('.abm-cleanup-import');
+    let currentImportSession = '';
 
     if (!backupConfig.ajaxUrl) {
         return;
@@ -71,6 +77,54 @@
         nonce: backupConfig.managementNonce,
         ...payload,
     });
+
+    const setImportProgress = (data = {}) => {
+        const percent = Math.max(0, Math.min(100, Number(data.percent || 0)));
+
+        if (importProgress) {
+            importProgress.hidden = false;
+        }
+
+        if (importBar) {
+            importBar.style.width = `${percent}%`;
+        }
+
+        if (importPercent) {
+            importPercent.textContent = `${percent}%`;
+        }
+
+        if (importStatus) {
+            const media = `${Number(data.media_done || 0)}/${Number(data.media_total || 0)}`;
+            const items = `${Number(data.items_done || 0)}/${Number(data.items_total || 0)}`;
+            importStatus.textContent = `${data.phase || 'prepare'} · media ${media} · records ${items}`;
+        }
+    };
+
+    const processImportSession = (sessionId, button) => {
+        managementRequest('abm_process_smart_import', { session_id: sessionId })
+            .done((response) => {
+                const data = response.data || {};
+                currentImportSession = data.session_id || sessionId;
+                setImportProgress(data);
+                importResult.textContent = data.message || backupConfig.i18n.importing || 'Importing package...';
+
+                if (data.done) {
+                    importResult.innerHTML = `<strong>${escapeHtml(data.message || 'Import completed.')}</strong>`;
+                    if (importCleanup) {
+                        importCleanup.hidden = false;
+                    }
+                    return;
+                }
+
+                window.setTimeout(() => processImportSession(currentImportSession, button), 450);
+            })
+            .fail((xhr) => {
+                importResult.classList.add('is-error');
+                importResult.textContent = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Import failed. You can retry to resume from the last saved chunk.';
+                button.disabled = false;
+                button.textContent = 'Upload & Import';
+            });
+    };
 
     tabs.forEach((tab) => {
         tab.addEventListener('click', () => {
@@ -301,14 +355,19 @@
 
             const button = importForm.querySelector('button[type="submit"]');
             const formData = new FormData(importForm);
-            formData.append('action', 'abm_smart_import');
+            formData.append('action', 'abm_prepare_smart_import');
             formData.append('nonce', backupConfig.managementNonce);
 
             button.disabled = true;
             button.textContent = backupConfig.i18n.importing || 'Importing package...';
+            currentImportSession = '';
             importResult.hidden = false;
             importResult.className = 'abm-import-result';
             importResult.textContent = button.textContent;
+            if (importCleanup) {
+                importCleanup.hidden = true;
+            }
+            setImportProgress({ percent: 0, phase: 'prepare' });
 
             $.ajax({
                 url: backupConfig.ajaxUrl,
@@ -319,15 +378,49 @@
             })
                 .done((response) => {
                     const data = response.data || {};
-                    importResult.innerHTML = `<strong>${escapeHtml(data.message || 'Import completed.')}</strong>`;
+                    currentImportSession = data.session_id || '';
+                    setImportProgress(data);
+
+                    if (!currentImportSession) {
+                        throw new Error('Import session was not created.');
+                    }
+
+                    processImportSession(currentImportSession, button);
                 })
                 .fail((xhr) => {
                     importResult.classList.add('is-error');
                     importResult.textContent = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Import failed.';
-                })
-                .always(() => {
                     button.disabled = false;
                     button.textContent = 'Upload & Import';
+                });
+        });
+    }
+
+    if (importCleanup) {
+        importCleanup.addEventListener('click', () => {
+            if (!currentImportSession) {
+                return;
+            }
+
+            if (!window.confirm('Delete temporary import files for this session?')) {
+                return;
+            }
+
+            importCleanup.disabled = true;
+
+            managementRequest('abm_cleanup_import', { session_id: currentImportSession })
+                .done((response) => {
+                    const data = response.data || {};
+                    importResult.innerHTML = `<strong>${escapeHtml(data.message || 'Temporary import files were deleted.')}</strong>`;
+                    importCleanup.hidden = true;
+                    currentImportSession = '';
+                })
+                .fail((xhr) => {
+                    importResult.classList.add('is-error');
+                    importResult.textContent = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Cleanup failed.';
+                })
+                .always(() => {
+                    importCleanup.disabled = false;
                 });
         });
     }

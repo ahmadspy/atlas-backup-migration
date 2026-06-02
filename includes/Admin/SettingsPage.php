@@ -14,11 +14,17 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+/**
+ * Registers and renders the Atlas Backup admin settings workspace.
+ */
 final class SettingsPage
 {
     private const OPTION_NAME = 'abm_settings';
     private const PAGE_SLUG = 'atlas-backup-migration';
 
+    /**
+     * Hooks admin menu, settings, assets, and plugin action links.
+     */
     public function register(): void
     {
         add_action('admin_menu', [$this, 'add_menu_page']);
@@ -27,6 +33,9 @@ final class SettingsPage
         add_filter('plugin_action_links_' . ABM_BASENAME, [$this, 'add_settings_link']);
     }
 
+    /**
+     * Adds top-level and submenu admin pages.
+     */
     public function add_menu_page(): void
     {
         add_menu_page(
@@ -49,6 +58,9 @@ final class SettingsPage
         );
     }
 
+    /**
+     * Registers plugin settings with sanitization.
+     */
     public function register_settings(): void
     {
         register_setting(
@@ -62,6 +74,11 @@ final class SettingsPage
         );
     }
 
+    /**
+     * Enqueues admin CSS/JS and localizes AJAX configuration.
+     *
+     * @param string $hook_suffix Current admin page hook.
+     */
     public function enqueue_assets(string $hook_suffix): void
     {
         if ('toplevel_page_' . self::PAGE_SLUG !== $hook_suffix) {
@@ -108,6 +125,9 @@ final class SettingsPage
         );
     }
 
+    /**
+     * Renders the admin settings page template.
+     */
     public function render(): void
     {
         if (! current_user_can('manage_options')) {
@@ -122,6 +142,12 @@ final class SettingsPage
         require ABM_PATH . 'templates/admin/settings-page.php';
     }
 
+    /**
+     * Sanitizes persisted plugin settings.
+     *
+     * @param mixed $input Raw settings input.
+     * @return array
+     */
     public function sanitize_settings($input): array
     {
         $defaults = $this->default_settings();
@@ -136,6 +162,12 @@ final class SettingsPage
         ];
     }
 
+    /**
+     * Adds a Settings link to the Plugins screen row.
+     *
+     * @param array $links Existing action links.
+     * @return array
+     */
     public function add_settings_link(array $links): array
     {
         $settings_link = sprintf(
@@ -149,6 +181,11 @@ final class SettingsPage
         return $links;
     }
 
+    /**
+     * Returns default plugin settings.
+     *
+     * @return array
+     */
     private function default_settings(): array
     {
         return [
@@ -158,6 +195,11 @@ final class SettingsPage
         ];
     }
 
+    /**
+     * Returns installed theme choices for the admin UI.
+     *
+     * @return array
+     */
     private function theme_choices(): array
     {
         $themes = [];
