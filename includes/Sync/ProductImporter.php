@@ -31,7 +31,7 @@ final class ProductImporter
     {
         $post_data = is_array($payload['post'] ?? null) ? $payload['post'] : [];
 
-        if (empty($post_data['post_title']) || empty($post_data['post_type'])) {
+        if (empty($post_data['post_type'])) {
             return new WP_Error('abm_bad_product_payload', __('Invalid product payload.', 'atlas-backup-migration'), ['status' => 400]);
         }
 

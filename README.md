@@ -99,4 +99,4 @@ atlas-backup-migration/
 
 ## License
 
-Add your preferred license before publishing this repository publicly.
+No public license is included in this repository. Add a project-approved license before public distribution.

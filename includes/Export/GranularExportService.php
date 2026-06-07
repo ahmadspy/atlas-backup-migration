@@ -404,11 +404,16 @@ final class GranularExportService
         );
 
         foreach ($iterator as $file) {
-            if (! $file instanceof \SplFileInfo || ! $file->isFile() || ! $file->isReadable()) {
+            if (! $file instanceof \SplFileInfo || $file->isLink() || ! $file->isFile() || ! $file->isReadable()) {
                 continue;
             }
 
             $path = wp_normalize_path($file->getPathname());
+
+            if (0 !== strpos(wp_normalize_path(realpath($path) ?: ''), $base)) {
+                continue;
+            }
+
             $relative = ltrim(str_replace($base, '', $path), '/');
             $zip->addFile($path, 'files/theme/' . $relative);
         }

@@ -165,8 +165,8 @@
                     <td>${escapeHtml(formatBytes(item.size))}</td>
                     <td>${escapeHtml(created)}</td>
                     <td class="abm-table-actions">
-                        <a class="button button-small" href="${packageUrl}">${escapeHtml('Download')}</a>
-                        ${installerUrl && item.type === 'full' ? `<a class="button button-small" href="${installerUrl}">${escapeHtml('Installer')}</a>` : ''}
+                        <a class="button button-small" href="${escapeHtml(packageUrl)}">${escapeHtml('Download')}</a>
+                        ${installerUrl && item.type === 'full' ? `<a class="button button-small" href="${escapeHtml(installerUrl)}">${escapeHtml('Installer')}</a>` : ''}
                         <button type="button" class="button button-small abm-delete-backup" data-job="${escapeHtml(item.job_id)}">${escapeHtml('Delete')}</button>
                     </td>
                 </tr>
@@ -335,7 +335,7 @@
                 .done((response) => {
                     const data = response.data || {};
                     const packageUrl = data.downloads && data.downloads.package ? data.downloads.package : '#';
-                    granularResult.innerHTML = `<strong>${escapeHtml('Granular package is ready.')}</strong> <a class="button button-primary" href="${packageUrl}">${escapeHtml('Download ZIP')}</a>`;
+                    granularResult.innerHTML = `<strong>${escapeHtml('Granular package is ready.')}</strong> <a class="button button-primary" href="${escapeHtml(packageUrl)}">${escapeHtml('Download ZIP')}</a>`;
                     loadBackups();
                 })
                 .fail((xhr) => {

@@ -80,17 +80,33 @@ function abm_installer_safe_path(string $base, string $path): string
 {
     $target = rtrim(realpath($base) ?: $base, DIRECTORY_SEPARATOR);
     $path = str_replace('\\', '/', $path);
-    $segments = [];
+    $fullPath = $target . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($path, '/'));
+    $normalizedTarget = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $target), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+    $normalizedPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $fullPath);
 
-    foreach (explode('/', $path) as $segment) {
-        if ('' === $segment || '.' === $segment || '..' === $segment) {
-            continue;
-        }
-
-        $segments[] = $segment;
+    if (0 !== strpos($normalizedPath, $normalizedTarget)) {
+        throw new RuntimeException('Package entry attempts to write outside the target directory.');
     }
 
-    return $target . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $segments);
+    return $normalizedPath;
+}
+
+function abm_installer_is_safe_zip_entry(string $entry): bool
+{
+    $entry = str_replace('\\', '/', $entry);
+    $entryToCheck = rtrim($entry, '/');
+
+    if ('' === $entryToCheck || false !== strpos($entry, "\0") || 0 === strpos($entry, '/') || preg_match('/^[A-Za-z]:\\//', $entry)) {
+        return false;
+    }
+
+    foreach (explode('/', $entryToCheck) as $segment) {
+        if ('' === $segment || '.' === $segment || '..' === $segment) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 function abm_installer_memory_to_bytes(string $value): int
@@ -725,10 +741,9 @@ function abm_installer_ajax_extract_chunk(string $packageName): void
 
         $relative = substr($entry, 5);
 
-        if ('' === $relative || false !== strpos($relative, '../') || false !== strpos($relative, '..\\')) {
-            $processed++;
-            $chunkCount++;
-            continue;
+        if (! abm_installer_is_safe_zip_entry($relative)) {
+            $zip->close();
+            throw new RuntimeException('Migration package contains an unsafe path: ' . $relative);
         }
 
         $target = abm_installer_safe_path(__DIR__, $relative);

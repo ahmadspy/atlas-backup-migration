@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Atlas Backup Migration
  * Plugin URI:  https://catus.ir/atlas-backup-migration
- * Description: Advanced WordPress backup and migration plugin boilerplate with a modern settings panel.
- * Version:     0.1.0
+ * Description: Production-oriented WordPress backup, migration, granular import/export, and site-to-site sync plugin.
+ * Version:     1.0.0
  * Author:      ahmadspy
  * Author URI:  https://catus.ir
  * Text Domain: atlas-backup-migration
@@ -18,7 +18,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('ABM_VERSION', '0.1.0');
+define('ABM_VERSION', '1.0.0');
 define('ABM_FILE', __FILE__);
 define('ABM_PATH', plugin_dir_path(__FILE__));
 define('ABM_URL', plugin_dir_url(__FILE__));

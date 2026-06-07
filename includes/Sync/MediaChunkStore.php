@@ -50,6 +50,7 @@ final class MediaChunkStore
         $chunk_dir = trailingslashit($upload_dir['basedir']) . self::CHUNK_DIR . '/' . $transfer_id;
         wp_mkdir_p($chunk_dir);
         $this->protectDirectory(trailingslashit($upload_dir['basedir']) . self::CHUNK_DIR);
+        $this->protectDirectory($chunk_dir);
 
         $part_path = trailingslashit($chunk_dir) . sprintf('%06d.part', $chunk_index);
 
@@ -183,6 +184,16 @@ final class MediaChunkStore
 
         if (! file_exists($htaccess)) {
             file_put_contents($htaccess, "Options -Indexes\n<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n", LOCK_EX);
+        }
+
+        $web_config = trailingslashit($directory) . 'web.config';
+
+        if (! file_exists($web_config)) {
+            file_put_contents(
+                $web_config,
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<configuration><system.webServer><authorization><deny users=\"*\" /></authorization></system.webServer></configuration>\n",
+                LOCK_EX
+            );
         }
     }
 }

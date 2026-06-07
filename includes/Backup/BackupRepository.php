@@ -85,6 +85,13 @@ final class BackupRepository
             return false;
         }
 
+        $manifest_path = trailingslashit($directory) . 'manifest.json';
+        $state = is_readable($manifest_path) ? json_decode((string) file_get_contents($manifest_path), true) : null;
+
+        if (! is_array($state) || sanitize_key((string) ($state['job_id'] ?? '')) !== $job->id()) {
+            return false;
+        }
+
         $this->deleteDirectory($directory);
 
         return ! is_dir($directory);
@@ -146,6 +153,16 @@ final class BackupRepository
 
         if (! file_exists($htaccess)) {
             file_put_contents($htaccess, "Deny from all\n", LOCK_EX);
+        }
+
+        $web_config = trailingslashit($directory) . 'web.config';
+
+        if (! file_exists($web_config)) {
+            file_put_contents(
+                $web_config,
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<configuration><system.webServer><authorization><deny users=\"*\" /></authorization></system.webServer></configuration>\n",
+                LOCK_EX
+            );
         }
     }
 }

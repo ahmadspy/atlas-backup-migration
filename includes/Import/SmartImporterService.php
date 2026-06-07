@@ -341,7 +341,11 @@ final class SmartImporterService
         }
 
         foreach ((array) ($theme['options'] ?? []) as $name => $value) {
-            update_option(sanitize_key($name), $value);
+            $option_name = $this->sanitizeOptionName((string) $name);
+
+            if ('' !== $option_name) {
+                update_option($option_name, $value);
+            }
         }
 
         if (! empty($theme['mods']) && is_array($theme['mods'])) {
@@ -452,12 +456,25 @@ final class SmartImporterService
                 continue;
             }
 
-            $contents = stream_get_contents($stream);
-            fclose($stream);
+            $output = fopen($destination, 'wb');
 
-            if (false === $contents || false === file_put_contents($destination, $contents, LOCK_EX)) {
+            if (false === $output) {
+                fclose($stream);
                 throw new RuntimeException(__('Unable to write extracted import file.', 'atlas-backup-migration'));
             }
+
+            while (! feof($stream)) {
+                $bytes = fread($stream, 1048576);
+
+                if (false === $bytes || false === fwrite($output, $bytes)) {
+                    fclose($stream);
+                    fclose($output);
+                    throw new RuntimeException(__('Unable to write extracted import file.', 'atlas-backup-migration'));
+                }
+            }
+
+            fclose($stream);
+            fclose($output);
         }
     }
 
@@ -470,6 +487,8 @@ final class SmartImporterService
     private function copyDirectory(string $source, string $target): void
     {
         wp_mkdir_p($target);
+        $source_base = trailingslashit(wp_normalize_path(realpath($source) ?: $source));
+        $target_base = trailingslashit(wp_normalize_path(realpath($target) ?: $target));
 
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
@@ -477,7 +496,15 @@ final class SmartImporterService
         );
 
         foreach ($iterator as $item) {
-            $destination = trailingslashit($target) . ltrim(str_replace(wp_normalize_path($source), '', wp_normalize_path($item->getPathname())), '/');
+            if ($item->isLink()) {
+                continue;
+            }
+
+            $destination = $target_base . ltrim(str_replace($source_base, '', wp_normalize_path($item->getPathname())), '/');
+
+            if (0 !== strpos(wp_normalize_path($destination), $target_base)) {
+                continue;
+            }
 
             if ($item->isDir()) {
                 wp_mkdir_p($destination);
@@ -486,6 +513,19 @@ final class SmartImporterService
 
             copy($item->getPathname(), $destination);
         }
+    }
+
+    /**
+     * Sanitizes a WordPress option name without changing valid case-sensitive keys.
+     *
+     * @param string $name Raw option name from a trusted Atlas package.
+     * @return string
+     */
+    private function sanitizeOptionName(string $name): string
+    {
+        $name = trim($name);
+
+        return 1 === preg_match('/^[A-Za-z0-9_.:-]{1,191}$/', $name) ? $name : '';
     }
 
     /**
