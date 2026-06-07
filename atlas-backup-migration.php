@@ -1,10 +1,10 @@
 <?php
 /**
  * Plugin Name: Atlas Backup Migration
- * Plugin URI:  https://catus.ir/atlas-backup-migration
+ * Plugin URI:  https://github.com/Hordekiller/atlas-backup-migration/
  * Description: Production-oriented WordPress backup, migration, granular import/export, and site-to-site sync plugin.
  * Version:     1.0.0
- * Author:      ahmadspy
+ * Author:      Hordekiller
  * Author URI:  https://catus.ir
  * Text Domain: atlas-backup-migration
  * Domain Path: /languages
